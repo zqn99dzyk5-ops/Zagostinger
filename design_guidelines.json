@@ -1,0 +1,160 @@
+{
+  "project_name": "Continental Academy",
+  "design_philosophy": {
+    "identity": "E1: The Anti-AI Designer",
+    "core_principles": [
+      "Fusion over Imitation: Mix Luxury Fashion aesthetics with EdTech functionality.",
+      "Emotion First: Every interaction must feel 'expensive' and 'trustworthy'.",
+      "Content is King: The student's journey to success is the hero story.",
+      "Negative Space: Use massive padding to create a sense of exclusivity."
+    ],
+    "anti_patterns": [
+      "No generic 'Inter' headings.",
+      "No default 'Vercel' look.",
+      "No full-screen gradients without texture.",
+      "No 'purple/teal' crypto vibes."
+    ]
+  },
+  "theme": {
+    "mode": "dark",
+    "strategy": "luxury_dark_mode",
+    "colors": {
+      "background": "#030303",
+      "foreground": "#F5F5F7",
+      "card": "#0F0F11",
+      "card_foreground": "#FFFFFF",
+      "popover": "#0F0F11",
+      "popover_foreground": "#FFFFFF",
+      "primary": "#D4AF37",
+      "primary_foreground": "#000000",
+      "secondary": "#1E293B",
+      "secondary_foreground": "#FFFFFF",
+      "muted": "#1A1A1A",
+      "muted_foreground": "#A1A1AA",
+      "accent": "#2A2A2A",
+      "accent_foreground": "#FFFFFF",
+      "destructive": "#7F1D1D",
+      "destructive_foreground": "#FFFFFF",
+      "border": "#27272A",
+      "input": "#27272A",
+      "ring": "#D4AF37"
+    },
+    "gradients": {
+      "gold_glow": "linear-gradient(135deg, #D4AF37 0%, #AA8A2E 100%)",
+      "dark_glass": "rgba(15, 15, 17, 0.7)"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Playfair Display, serif",
+      "body": "DM Sans, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-5xl md:text-7xl font-bold tracking-tight",
+      "h2": "text-4xl md:text-5xl font-semibold tracking-tight",
+      "h3": "text-2xl md:text-3xl font-medium",
+      "body": "text-base md:text-lg leading-relaxed text-muted-foreground",
+      "small": "text-sm font-medium tracking-wide uppercase text-muted-foreground"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Playfair+Display:wght@400;600;700&display=swap');"
+    ]
+  },
+  "layout_system": {
+    "container": "max-w-7xl mx-auto px-6 md:px-12",
+    "spacing": {
+      "section_gap": "py-24 md:py-32",
+      "element_gap": "gap-6 md:gap-12"
+    },
+    "grid_strategies": {
+      "marketing": "grid grid-cols-1 md:grid-cols-12 gap-8",
+      "dashboard": "grid grid-cols-1 md:grid-cols-4 gap-6"
+    },
+    "border_radius": {
+      "default": "rounded-xl",
+      "card": "rounded-2xl",
+      "button": "rounded-full"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all duration-300",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-white/10",
+      "ghost": "hover:bg-white/5 text-foreground"
+    },
+    "cards": {
+      "style": "bg-card border border-white/5 shadow-2xl hover:border-primary/30 transition-colors duration-300",
+      "glass": "bg-black/40 backdrop-blur-xl border border-white/10"
+    },
+    "inputs": {
+      "style": "bg-input/50 border-white/10 focus:border-primary focus:ring-primary/20 h-12"
+    }
+  },
+  "visual_enhancers": {
+    "texture": "bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 fixed inset-0 pointer-events-none z-50",
+    "glassmorphism": "backdrop-blur-xl bg-black/60 border-b border-white/10",
+    "shadows": {
+      "glow": "shadow-[0_0_40px_-10px_rgba(212,175,55,0.3)]"
+    }
+  },
+  "motion": {
+    "library": "framer-motion",
+    "preferences": {
+      "reduced_motion": "respect",
+      "default_transition": {
+        "duration": 0.5,
+        "ease": [0.22, 1, 0.36, 1]
+      }
+    },
+    "animations": {
+      "fade_up": {
+        "initial": { "opacity": 0, "y": 20 },
+        "animate": { "opacity": 1, "y": 0 }
+      },
+      "stagger_children": {
+        "animate": { "transition": { "staggerChildren": 0.1 } }
+      }
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_bg": {
+        "url": "https://images.unsplash.com/photo-1684488624316-774ea1824d97?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Student focused on laptop in dark environment",
+        "usage": "Hero section background or split layout image"
+      },
+      "creator_filming": {
+        "url": "https://images.unsplash.com/photo-1600140094209-bea02144c09c?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Content creator filming with camera",
+        "usage": "Shop or Creator Economy section"
+      },
+      "mobile_creator": {
+        "url": "https://images.unsplash.com/photo-1611784728429-41a6cf88eec1?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Creator using smartphone",
+        "usage": "TikTok/Social Media monetization section"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-1"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Install 'framer-motion' and 'clsx' 'tailwind-merge' if not present.",
+    "2. FONTS: Add the Google Fonts import to 'index.css' immediately.",
+    "3. THEME: Update 'tailwind.config.js' with the colors defined in this JSON. Do not rely on default shadcn colors.",
+    "4. LAYOUT: Use the 'Bento Grid' strategy for the dashboard. Avoid equal-sized columns.",
+    "5. COMPONENTS: Customize all Shadcn components to match the 'Luxury Dark' aesthetic (rounded-xl, border-white/10).",
+    "6. TEXTURE: Add the noise texture overlay to the 'App.js' or main layout to give the site a film-grain look.",
+    "7. IMAGES: Use the provided Unsplash URLs. Do not use placeholders.",
+    "8. ACCESSIBILITY: Ensure text contrast is high (Off-white on Black). Use 'data-testid' on all interactive elements."
+  ],
+  "universal_guidelines": [
+    "Do not use gradients for text unless it's a very subtle gold shimmer.",
+    "Avoid 'Inter' font for headings. Use 'Playfair Display'.",
+    "Use 2x more padding than you think is necessary.",
+    "Every hover state must have a transition.",
+    "Dark mode is the default and only mode for this luxury brand."
+  ]
+}
