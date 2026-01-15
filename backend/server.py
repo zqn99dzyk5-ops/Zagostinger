@@ -264,7 +264,8 @@ async def create_program(program: ProgramCreate, admin: dict = Depends(get_admin
     program_dict["id"] = str(uuid.uuid4())
     program_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.programs.insert_one(program_dict)
-    return {"id": program_dict["id"], **program_dict}
+    program_dict.pop("_id", None)  # Remove MongoDB _id
+    return program_dict
 
 @api_router.put("/admin/programs/{program_id}")
 async def update_program(program_id: str, program: ProgramCreate, admin: dict = Depends(get_admin_user)):
@@ -320,7 +321,8 @@ async def create_course(course: CourseCreate, admin: dict = Depends(get_admin_us
     course_dict["id"] = str(uuid.uuid4())
     course_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.courses.insert_one(course_dict)
-    return {"id": course_dict["id"], **course_dict}
+    course_dict.pop("_id", None)  # Remove MongoDB _id
+    return course_dict
 
 @api_router.put("/admin/courses/{course_id}")
 async def update_course(course_id: str, course: CourseCreate, admin: dict = Depends(get_admin_user)):
@@ -343,7 +345,8 @@ async def create_module(module: ModuleCreate, admin: dict = Depends(get_admin_us
     module_dict["id"] = str(uuid.uuid4())
     module_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.modules.insert_one(module_dict)
-    return {"id": module_dict["id"], **module_dict}
+    module_dict.pop("_id", None)  # Remove MongoDB _id
+    return module_dict
 
 @api_router.put("/admin/modules/{module_id}")
 async def update_module(module_id: str, module: ModuleCreate, admin: dict = Depends(get_admin_user)):
@@ -373,7 +376,8 @@ async def create_video(video: VideoCreate, admin: dict = Depends(get_admin_user)
     video_dict["id"] = str(uuid.uuid4())
     video_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.videos.insert_one(video_dict)
-    return {"id": video_dict["id"], **video_dict}
+    video_dict.pop("_id", None)  # Remove MongoDB _id
+    return video_dict
 
 @api_router.put("/admin/videos/{video_id}")
 async def update_video(video_id: str, video: VideoCreate, admin: dict = Depends(get_admin_user)):
@@ -410,7 +414,8 @@ async def create_shop_product(product: ShopProductCreate, admin: dict = Depends(
     product_dict["id"] = str(uuid.uuid4())
     product_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.shop_products.insert_one(product_dict)
-    return {"id": product_dict["id"], **product_dict}
+    product_dict.pop("_id", None)  # Remove MongoDB _id
+    return product_dict
 
 @api_router.put("/admin/shop/products/{product_id}")
 async def update_shop_product(product_id: str, product: ShopProductCreate, admin: dict = Depends(get_admin_user)):
@@ -436,7 +441,8 @@ async def create_faq(faq: FAQCreate, admin: dict = Depends(get_admin_user)):
     faq_dict = faq.model_dump()
     faq_dict["id"] = str(uuid.uuid4())
     await db.faqs.insert_one(faq_dict)
-    return {"id": faq_dict["id"], **faq_dict}
+    faq_dict.pop("_id", None)  # Remove MongoDB _id
+    return faq_dict
 
 @api_router.put("/admin/faqs/{faq_id}")
 async def update_faq(faq_id: str, faq: FAQCreate, admin: dict = Depends(get_admin_user)):
@@ -462,7 +468,8 @@ async def create_result(result: ResultCreate, admin: dict = Depends(get_admin_us
     result_dict = result.model_dump()
     result_dict["id"] = str(uuid.uuid4())
     await db.results.insert_one(result_dict)
-    return {"id": result_dict["id"], **result_dict}
+    result_dict.pop("_id", None)  # Remove MongoDB _id
+    return result_dict
 
 @api_router.delete("/admin/results/{result_id}")
 async def delete_result(result_id: str, admin: dict = Depends(get_admin_user)):
