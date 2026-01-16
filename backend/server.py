@@ -82,7 +82,19 @@ class CourseCreate(BaseModel):
     description: str
     program_id: str
     thumbnail_url: Optional[str] = None
+    duration_hours: Optional[int] = None  # Trajanje kursa u satima
     order: int = 0
+    is_active: bool = True
+
+class LessonCreate(BaseModel):
+    title: str
+    description: str
+    course_id: str
+    video_url: Optional[str] = None  # MUX playback URL ili embed URL
+    mux_playback_id: Optional[str] = None
+    duration_minutes: Optional[int] = None  # Trajanje lekcije u minutama
+    order: int = 0
+    is_free: bool = False  # Da li je lekcija besplatna za pregled
 
 class ModuleCreate(BaseModel):
     title: str
@@ -98,6 +110,10 @@ class VideoCreate(BaseModel):
     mux_asset_id: Optional[str] = None
     duration: Optional[int] = None
     order: int = 0
+
+class UserCourseAssign(BaseModel):
+    user_id: str
+    course_ids: List[str]
 
 class ShopProductCreate(BaseModel):
     title: str
