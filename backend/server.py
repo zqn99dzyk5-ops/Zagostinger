@@ -631,13 +631,20 @@ async def get_settings():
         default_settings = {
             "type": "site",
             "site_name": "Continental Academy",
+            "logo_url": "https://customer-assets.emergentagent.com/job_eduplatform-93/artifacts/dcf76jzj_832ce95a5e5f5009b4c1b8f19a96d3e3.png",
+            "favicon_url": "https://customer-assets.emergentagent.com/job_eduplatform-93/artifacts/dcf76jzj_832ce95a5e5f5009b4c1b8f19a96d3e3.png",
             "hero_video_url": "",
             "hero_headline": "Monetizuj svoj sadržaj. Pretvori znanje u prihod.",
             "hero_subheadline": "Nauči kako da zaradiš na TikTok, YouTube i Facebook platformama sa našim ekspertnim vodičima.",
             "discord_invite_url": "https://discord.gg/placeholder",
             "theme": "dark-luxury",
-            "social_links": {},
+            "social_links": {"instagram": "", "youtube": "", "tiktok": "", "facebook": ""},
             "contact_email": "info@continentalacademy.com",
+            "contact_phone": "",
+            "footer_text": "Profesionalna online akademija za monetizaciju digitalnog sadržaja.",
+            "show_results_section": True,
+            "show_faq_section": True,
+            "currency": "EUR",
             "available_themes": ["dark-luxury", "clean-light", "midnight-purple", "education-classic"]
         }
         await db.settings.insert_one(default_settings)
@@ -656,13 +663,20 @@ async def update_settings(settings: SiteSettingsUpdate, admin: dict = Depends(ge
         default_settings = {
             "type": "site",
             "site_name": "Continental Academy",
+            "logo_url": "https://customer-assets.emergentagent.com/job_eduplatform-93/artifacts/dcf76jzj_832ce95a5e5f5009b4c1b8f19a96d3e3.png",
+            "favicon_url": "https://customer-assets.emergentagent.com/job_eduplatform-93/artifacts/dcf76jzj_832ce95a5e5f5009b4c1b8f19a96d3e3.png",
             "hero_video_url": "",
             "hero_headline": "Monetizuj svoj sadržaj. Pretvori znanje u prihod.",
             "hero_subheadline": "Nauči kako da zaradiš na TikTok, YouTube i Facebook platformama sa našim ekspertnim vodičima.",
             "discord_invite_url": "https://discord.gg/placeholder",
             "theme": "dark-luxury",
-            "social_links": {},
+            "social_links": {"instagram": "", "youtube": "", "tiktok": "", "facebook": ""},
             "contact_email": "info@continentalacademy.com",
+            "contact_phone": "",
+            "footer_text": "Profesionalna online akademija za monetizaciju digitalnog sadržaja.",
+            "show_results_section": True,
+            "show_faq_section": True,
+            "currency": "EUR",
             "available_themes": ["dark-luxury", "clean-light", "midnight-purple", "education-classic"]
         }
         await db.settings.insert_one(default_settings)
