@@ -138,6 +138,8 @@ class ResultCreate(BaseModel):
 
 class SiteSettingsUpdate(BaseModel):
     site_name: Optional[str] = None
+    logo_url: Optional[str] = None
+    favicon_url: Optional[str] = None
     hero_video_url: Optional[str] = None
     hero_headline: Optional[str] = None
     hero_subheadline: Optional[str] = None
@@ -145,6 +147,11 @@ class SiteSettingsUpdate(BaseModel):
     theme: Optional[str] = None
     social_links: Optional[Dict[str, str]] = None
     contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    footer_text: Optional[str] = None
+    show_results_section: Optional[bool] = None
+    show_faq_section: Optional[bool] = None
+    currency: Optional[str] = None
 
 class AnalyticsEvent(BaseModel):
     event_type: str
