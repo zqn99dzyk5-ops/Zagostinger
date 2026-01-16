@@ -52,6 +52,7 @@ class UserResponse(BaseModel):
     role: str
     created_at: str
     subscriptions: List[str] = []
+    courses: List[str] = []
 
 class TokenResponse(BaseModel):
     access_token: str
