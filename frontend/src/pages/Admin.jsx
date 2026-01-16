@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { 
   Users, BookOpen, ShoppingBag, Settings, BarChart3, 
   Plus, Trash2, Edit, Save, Loader2, MessageCircle, 
-  FileText, Image, Video, DollarSign, Palette
+  FileText, Image, Video, DollarSign, Palette, GraduationCap,
+  PlayCircle, Clock, ChevronDown, ChevronUp, Eye, EyeOff, X
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -13,13 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Switch } from '../components/ui/switch';
+import { Badge } from '../components/ui/badge';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '../components/ui/dialog';
 import {
   Table,
@@ -29,10 +30,15 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../components/ui/accordion';
 import { 
-  programsAPI, coursesAPI, modulesAPI, videosAPI, 
-  shopAPI, faqsAPI, resultsAPI, settingsAPI, 
-  analyticsAPI, adminAPI 
+  programsAPI, coursesAPI, lessonsAPI, shopAPI, faqsAPI, 
+  resultsAPI, settingsAPI, analyticsAPI, adminAPI 
 } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -53,7 +59,13 @@ const Admin = () => {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [showUserCoursesModal, setShowUserCoursesModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [courseLessons, setCourseLessons] = useState({});
 
   useEffect(() => {
     loadAllData();
@@ -69,7 +81,7 @@ const Admin = () => {
         analyticsAPI.getStats(),
         adminAPI.getUsers(),
         programsAPI.getAll(),
-        coursesAPI.getAll(),
+        coursesAPI.adminGetAll(),
         shopAPI.getProducts(),
         faqsAPI.getAll(),
         resultsAPI.getAll(),
@@ -122,6 +134,16 @@ const Admin = () => {
     }
   };
 
+  // Load lessons for a course
+  const loadCourseLessons = async (courseId) => {
+    try {
+      const response = await lessonsAPI.getAll(courseId);
+      setCourseLessons(prev => ({ ...prev, [courseId]: response.data }));
+    } catch (error) {
+      console.error('Error loading lessons:', error);
+    }
+  };
+
   // CRUD for Programs
   const saveProgram = async (programData) => {
     try {
@@ -146,6 +168,69 @@ const Admin = () => {
       await programsAPI.delete(id);
       setPrograms(programs.filter(p => p.id !== id));
       toast.success('Program obrisan');
+    } catch (error) {
+      toast.error('Greška pri brisanju');
+    }
+  };
+
+  // CRUD for Courses
+  const saveCourse = async (courseData) => {
+    try {
+      if (editingItem?.id) {
+        await coursesAPI.update(editingItem.id, courseData);
+        toast.success('Kurs ažuriran');
+      } else {
+        await coursesAPI.create(courseData);
+        toast.success('Kurs kreiran');
+      }
+      loadAllData();
+      setShowCourseModal(false);
+      setEditingItem(null);
+    } catch (error) {
+      toast.error('Greška pri spremanju kursa');
+    }
+  };
+
+  const deleteCourse = async (id) => {
+    if (!confirm('Da li ste sigurni? Sve lekcije će biti obrisane.')) return;
+    try {
+      await coursesAPI.delete(id);
+      setCourses(courses.filter(c => c.id !== id));
+      toast.success('Kurs obrisan');
+    } catch (error) {
+      toast.error('Greška pri brisanju');
+    }
+  };
+
+  // CRUD for Lessons
+  const saveLesson = async (lessonData) => {
+    try {
+      if (editingItem?.id) {
+        await lessonsAPI.update(editingItem.id, lessonData);
+        toast.success('Lekcija ažurirana');
+      } else {
+        await lessonsAPI.create(lessonData);
+        toast.success('Lekcija kreirana');
+      }
+      if (selectedCourse) {
+        loadCourseLessons(selectedCourse.id);
+      }
+      setShowLessonModal(false);
+      setEditingItem(null);
+    } catch (error) {
+      toast.error('Greška pri spremanju lekcije');
+    }
+  };
+
+  const deleteLesson = async (lessonId, courseId) => {
+    if (!confirm('Da li ste sigurni?')) return;
+    try {
+      await lessonsAPI.delete(lessonId);
+      setCourseLessons(prev => ({
+        ...prev,
+        [courseId]: prev[courseId]?.filter(l => l.id !== lessonId)
+      }));
+      toast.success('Lekcija obrisana');
     } catch (error) {
       toast.error('Greška pri brisanju');
     }
@@ -232,6 +317,45 @@ const Admin = () => {
     }
   };
 
+  // User course management
+  const openUserCoursesModal = async (user) => {
+    setSelectedUser(user);
+    setShowUserCoursesModal(true);
+  };
+
+  const toggleUserCourse = async (courseId, hasAccess) => {
+    if (!selectedUser) return;
+    try {
+      if (hasAccess) {
+        await adminAPI.removeCourseFromUser(selectedUser.id, courseId);
+      } else {
+        await adminAPI.addCourseToUser(selectedUser.id, courseId);
+      }
+      // Update local state
+      setUsers(users.map(u => {
+        if (u.id === selectedUser.id) {
+          const courses = u.courses || [];
+          return {
+            ...u,
+            courses: hasAccess 
+              ? courses.filter(c => c !== courseId)
+              : [...courses, courseId]
+          };
+        }
+        return u;
+      }));
+      setSelectedUser(prev => ({
+        ...prev,
+        courses: hasAccess
+          ? (prev.courses || []).filter(c => c !== courseId)
+          : [...(prev.courses || []), courseId]
+      }));
+      toast.success(hasAccess ? 'Kurs uklonjen' : 'Kurs dodan');
+    } catch (error) {
+      toast.error('Greška pri ažuriranju');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20">
@@ -259,12 +383,15 @@ const Admin = () => {
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="bg-card border border-white/5 p-1 rounded-xl">
+          <TabsList className="bg-card border border-white/5 p-1 rounded-xl flex-wrap h-auto">
             <TabsTrigger value="overview" className="gap-2 rounded-lg">
               <BarChart3 className="w-4 h-4" /> Pregled
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2 rounded-lg">
               <Users className="w-4 h-4" /> Korisnici
+            </TabsTrigger>
+            <TabsTrigger value="courses" className="gap-2 rounded-lg">
+              <GraduationCap className="w-4 h-4" /> Kursevi
             </TabsTrigger>
             <TabsTrigger value="programs" className="gap-2 rounded-lg">
               <BookOpen className="w-4 h-4" /> Programi
@@ -313,11 +440,11 @@ const Admin = () => {
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                      <BarChart3 className="w-6 h-6 text-blue-500" />
+                      <GraduationCap className="w-6 h-6 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{analytics?.page_views_7d || 0}</p>
-                      <p className="text-sm text-muted-foreground">Pregleda (7 dana)</p>
+                      <p className="text-2xl font-bold">{courses.length}</p>
+                      <p className="text-sm text-muted-foreground">Kurseva</p>
                     </div>
                   </div>
                 </CardContent>
@@ -365,7 +492,7 @@ const Admin = () => {
             <Card className="luxury-card">
               <CardHeader>
                 <CardTitle>Korisnici</CardTitle>
-                <CardDescription>Upravljajte korisnicima i njihovim ulogama</CardDescription>
+                <CardDescription>Upravljajte korisnicima, ulogama i pristupom kursevima</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -375,6 +502,7 @@ const Admin = () => {
                       <TableHead>Email</TableHead>
                       <TableHead>Uloga</TableHead>
                       <TableHead>Pretplate</TableHead>
+                      <TableHead>Kursevi</TableHead>
                       <TableHead>Datum</TableHead>
                       <TableHead>Akcije</TableHead>
                     </TableRow>
@@ -399,12 +527,21 @@ const Admin = () => {
                           </Select>
                         </TableCell>
                         <TableCell>{user.subscriptions?.length || 0}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{user.courses?.length || 0} kurseva</Badge>
+                        </TableCell>
                         <TableCell className="text-muted-foreground">
                           {new Date(user.created_at).toLocaleDateString('bs')}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => openUserCoursesModal(user)}
+                            data-testid={`manage-courses-${user.id}`}
+                          >
+                            <GraduationCap className="w-4 h-4 mr-1" />
+                            Kursevi
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -415,13 +552,184 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Courses Tab - NEW */}
+          <TabsContent value="courses">
+            <Card className="luxury-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Kursevi i Lekcije</CardTitle>
+                  <CardDescription>Upravljajte kursevima i njihovim video lekcijama</CardDescription>
+                </div>
+                <Button 
+                  className="gap-2" 
+                  onClick={() => { setEditingItem(null); setShowCourseModal(true); }}
+                  data-testid="add-course-btn"
+                >
+                  <Plus className="w-4 h-4" /> Novi kurs
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="multiple" className="space-y-4">
+                  {courses.map((course) => (
+                    <AccordionItem 
+                      key={course.id} 
+                      value={course.id}
+                      className="luxury-card border-white/10 px-0 overflow-hidden"
+                    >
+                      <AccordionTrigger 
+                        className="px-6 py-4 hover:no-underline hover:bg-white/5"
+                        onClick={() => {
+                          if (!courseLessons[course.id]) {
+                            loadCourseLessons(course.id);
+                          }
+                        }}
+                      >
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <GraduationCap className="w-6 h-6 text-primary" />
+                            </div>
+                            <div className="text-left">
+                              <p className="font-semibold">{course.title}</p>
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                                <span className="flex items-center gap-1">
+                                  <PlayCircle className="w-4 h-4" />
+                                  {course.lesson_count || 0} lekcija
+                                </span>
+                                {course.duration_hours && (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    {course.duration_hours}h
+                                  </span>
+                                )}
+                                <Badge variant="outline" className="text-xs">
+                                  {course.program_name}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => { setEditingItem(course); setShowCourseModal(true); }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => deleteCourse(course.id)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-6">
+                        <div className="space-y-4">
+                          {/* Add Lesson Button */}
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-medium text-sm text-muted-foreground">LEKCIJE</h4>
+                            <Button 
+                              size="sm" 
+                              className="gap-2"
+                              onClick={() => {
+                                setSelectedCourse(course);
+                                setEditingItem(null);
+                                setShowLessonModal(true);
+                              }}
+                              data-testid={`add-lesson-${course.id}`}
+                            >
+                              <Plus className="w-4 h-4" /> Dodaj lekciju
+                            </Button>
+                          </div>
+                          
+                          {/* Lessons List */}
+                          <div className="space-y-2">
+                            {courseLessons[course.id]?.length > 0 ? (
+                              courseLessons[course.id].map((lesson, index) => (
+                                <div 
+                                  key={lesson.id}
+                                  className="flex items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                >
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-bold">
+                                      {lesson.order || index + 1}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{lesson.title}</p>
+                                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                                        {lesson.duration_minutes && (
+                                          <span className="flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            {lesson.duration_minutes} min
+                                          </span>
+                                        )}
+                                        {lesson.video_url && (
+                                          <span className="flex items-center gap-1 text-green-500">
+                                            <Video className="w-3 h-3" />
+                                            Video dodan
+                                          </span>
+                                        )}
+                                        {lesson.is_free && (
+                                          <Badge variant="secondary" className="text-xs">Besplatno</Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedCourse(course);
+                                        setEditingItem(lesson);
+                                        setShowLessonModal(true);
+                                      }}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => deleteLesson(lesson.id, course.id)}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-destructive" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-8 text-muted-foreground">
+                                <Video className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                <p>Nema lekcija. Dodajte prvu lekciju.</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+                
+                {courses.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <GraduationCap className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>Nema kurseva. Kreirajte prvi kurs.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Programs Tab */}
           <TabsContent value="programs">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Edukacijski programi</CardTitle>
-                  <CardDescription>Upravljajte programima i kursevima</CardDescription>
+                  <CardTitle>Edukacijski programi (Pretplate)</CardTitle>
+                  <CardDescription>Upravljajte programima pretplata</CardDescription>
                 </div>
                 <Button 
                   className="gap-2" 
@@ -725,6 +1033,74 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
 
+        {/* Course Modal */}
+        <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
+          <DialogContent className="bg-card border-white/10 max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{editingItem ? 'Uredi kurs' : 'Novi kurs'}</DialogTitle>
+            </DialogHeader>
+            <CourseForm 
+              initialData={editingItem}
+              programs={programs}
+              onSave={saveCourse} 
+              onCancel={() => setShowCourseModal(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Lesson Modal */}
+        <Dialog open={showLessonModal} onOpenChange={setShowLessonModal}>
+          <DialogContent className="bg-card border-white/10 max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {editingItem ? 'Uredi lekciju' : 'Nova lekcija'}
+                {selectedCourse && <span className="text-muted-foreground font-normal"> - {selectedCourse.title}</span>}
+              </DialogTitle>
+            </DialogHeader>
+            <LessonForm 
+              initialData={editingItem}
+              courseId={selectedCourse?.id}
+              onSave={saveLesson} 
+              onCancel={() => setShowLessonModal(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* User Courses Modal */}
+        <Dialog open={showUserCoursesModal} onOpenChange={setShowUserCoursesModal}>
+          <DialogContent className="bg-card border-white/10 max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Upravljanje kursevima</DialogTitle>
+              <DialogDescription>
+                {selectedUser?.name} ({selectedUser?.email})
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {courses.map((course) => {
+                const hasAccess = selectedUser?.courses?.includes(course.id);
+                return (
+                  <div 
+                    key={course.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-white/5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <GraduationCap className="w-5 h-5 text-primary" />
+                      <div>
+                        <p className="font-medium">{course.title}</p>
+                        <p className="text-xs text-muted-foreground">{course.lesson_count || 0} lekcija</p>
+                      </div>
+                    </div>
+                    <Switch 
+                      checked={hasAccess}
+                      onCheckedChange={() => toggleUserCourse(course.id, hasAccess)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Program Modal */}
         <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
           <DialogContent className="bg-card border-white/10">
@@ -784,7 +1160,195 @@ const Admin = () => {
   );
 };
 
-// Form Components
+// Course Form
+const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    program_id: initialData?.program_id || '',
+    thumbnail_url: initialData?.thumbnail_url || '',
+    duration_hours: initialData?.duration_hours || '',
+    order: initialData?.order || 0,
+    is_active: initialData?.is_active !== false
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({
+      ...formData,
+      duration_hours: formData.duration_hours ? parseInt(formData.duration_hours) : null,
+      order: parseInt(formData.order) || 0
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label>Naziv kursa</Label>
+        <Input 
+          value={formData.title} 
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          placeholder="npr. TikTok za početnike"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Opis</Label>
+        <Textarea 
+          value={formData.description} 
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Kratki opis kursa..."
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Program (pretplata)</Label>
+        <Select 
+          value={formData.program_id} 
+          onValueChange={(v) => setFormData({ ...formData, program_id: v })}
+        >
+          <SelectTrigger><SelectValue placeholder="Odaberi program" /></SelectTrigger>
+          <SelectContent>
+            {programs.map(p => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Trajanje (sati)</Label>
+          <Input 
+            type="number" 
+            value={formData.duration_hours} 
+            onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
+            placeholder="npr. 10"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Redoslijed</Label>
+          <Input 
+            type="number" 
+            value={formData.order} 
+            onChange={(e) => setFormData({ ...formData, order: e.target.value })}
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Thumbnail URL</Label>
+        <Input 
+          value={formData.thumbnail_url} 
+          onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+          placeholder="https://..."
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch 
+          checked={formData.is_active} 
+          onCheckedChange={(v) => setFormData({ ...formData, is_active: v })}
+        />
+        <Label>Aktivan</Label>
+      </div>
+      <div className="flex gap-3 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>Odustani</Button>
+        <Button type="submit" className="bg-primary text-primary-foreground">Spremi</Button>
+      </div>
+    </form>
+  );
+};
+
+// Lesson Form
+const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    course_id: initialData?.course_id || courseId || '',
+    video_url: initialData?.video_url || '',
+    mux_playback_id: initialData?.mux_playback_id || '',
+    duration_minutes: initialData?.duration_minutes || '',
+    order: initialData?.order || 0,
+    is_free: initialData?.is_free || false
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({
+      ...formData,
+      duration_minutes: formData.duration_minutes ? parseInt(formData.duration_minutes) : null,
+      order: parseInt(formData.order) || 0
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label>Naziv lekcije</Label>
+        <Input 
+          value={formData.title} 
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          placeholder="npr. Lekcija 1: Uvod u TikTok"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Opis</Label>
+        <Textarea 
+          value={formData.description} 
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Šta ćete naučiti u ovoj lekciji..."
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Video URL (YouTube, Vimeo, ili direktni link)</Label>
+        <Input 
+          value={formData.video_url} 
+          onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+          placeholder="https://youtube.com/watch?v=... ili https://vimeo.com/..."
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>MUX Playback ID (opciono)</Label>
+        <Input 
+          value={formData.mux_playback_id} 
+          onChange={(e) => setFormData({ ...formData, mux_playback_id: e.target.value })}
+          placeholder="abc123xyz"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Trajanje (minuta)</Label>
+          <Input 
+            type="number" 
+            value={formData.duration_minutes} 
+            onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
+            placeholder="npr. 15"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Redoslijed</Label>
+          <Input 
+            type="number" 
+            value={formData.order} 
+            onChange={(e) => setFormData({ ...formData, order: e.target.value })}
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch 
+          checked={formData.is_free} 
+          onCheckedChange={(v) => setFormData({ ...formData, is_free: v })}
+        />
+        <Label>Besplatna lekcija (preview)</Label>
+      </div>
+      <div className="flex gap-3 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>Odustani</Button>
+        <Button type="submit" className="bg-primary text-primary-foreground">Spremi</Button>
+      </div>
+    </form>
+  );
+};
+
+// Program Form
 const ProgramForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
@@ -868,6 +1432,7 @@ const ProgramForm = ({ initialData, onSave, onCancel }) => {
   );
 };
 
+// Product Form
 const ProductForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
@@ -954,6 +1519,7 @@ const ProductForm = ({ initialData, onSave, onCancel }) => {
   );
 };
 
+// FAQ Form
 const FaqForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     question: initialData?.question || '',
@@ -993,6 +1559,7 @@ const FaqForm = ({ initialData, onSave, onCancel }) => {
   );
 };
 
+// Result Form
 const ResultForm = ({ onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     image_url: '',
