@@ -123,6 +123,10 @@ export const adminAPI = {
   getUsers: () => api.get('/admin/users'),
   updateUserRole: (userId, role) => api.put(`/admin/users/${userId}/role?role=${role}`),
   updateUserSubscriptions: (userId, programIds) => api.put(`/admin/users/${userId}/subscriptions`, programIds),
+  getUserCourses: (userId) => api.get(`/admin/users/${userId}/courses`),
+  assignCourses: (userId, courseIds) => api.put(`/admin/users/${userId}/courses`, courseIds),
+  addCourseToUser: (userId, courseId) => api.post(`/admin/users/${userId}/courses/add?course_id=${courseId}`),
+  removeCourseFromUser: (userId, courseId) => api.post(`/admin/users/${userId}/courses/remove?course_id=${courseId}`),
   seedData: () => api.post('/admin/seed'),
 };
 
