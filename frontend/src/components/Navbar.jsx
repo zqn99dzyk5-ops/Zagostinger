@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, User, LogOut, LayoutDashboard, ShoppingBag, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '../lib/auth';
+import { useSettings } from '../lib/settings';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,11 +36,19 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3" data-testid="nav-logo">
-            <div className="w-10 h-10 rounded-xl gradient-gold flex items-center justify-center">
-              <span className="text-black font-bold text-xl font-heading">C</span>
-            </div>
+            {settings.logo_url ? (
+              <img 
+                src={settings.logo_url} 
+                alt={settings.site_name || 'Logo'} 
+                className="h-12 w-auto object-contain"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl gradient-gold flex items-center justify-center">
+                <span className="text-black font-bold text-xl font-heading">C</span>
+              </div>
+            )}
             <span className="font-heading text-xl font-semibold text-foreground hidden sm:block">
-              Continental Academy
+              {settings.site_name || 'Continental Academy'}
             </span>
           </Link>
 
