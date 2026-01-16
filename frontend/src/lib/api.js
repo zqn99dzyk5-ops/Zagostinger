@@ -51,9 +51,20 @@ export const programsAPI = {
 export const coursesAPI = {
   getAll: (programId) => api.get('/courses', { params: { program_id: programId } }),
   getOne: (id) => api.get(`/courses/${id}`),
+  adminGetAll: () => api.get('/admin/courses'),
   create: (data) => api.post('/admin/courses', data),
   update: (id, data) => api.put(`/admin/courses/${id}`, data),
   delete: (id) => api.delete(`/admin/courses/${id}`),
+};
+
+// Lessons
+export const lessonsAPI = {
+  getAll: (courseId) => api.get(`/lessons/${courseId}`),
+  getOne: (id) => api.get(`/lesson/${id}`),
+  create: (data) => api.post('/admin/lessons', data),
+  update: (id, data) => api.put(`/admin/lessons/${id}`, data),
+  delete: (id) => api.delete(`/admin/lessons/${id}`),
+  reorder: (lessonOrders) => api.put('/admin/lessons/reorder', lessonOrders),
 };
 
 // Modules
