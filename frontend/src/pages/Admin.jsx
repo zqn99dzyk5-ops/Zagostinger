@@ -104,16 +104,6 @@ const Admin = () => {
     }
   };
 
-  const seedData = async () => {
-    try {
-      await adminAPI.seedData();
-      toast.success('Demo podaci uspješno dodani!');
-      loadAllData();
-    } catch (error) {
-      toast.error('Greška pri dodavanju demo podataka');
-    }
-  };
-
   const updateSettings = async (newSettings) => {
     try {
       const response = await settingsAPI.update(newSettings);
