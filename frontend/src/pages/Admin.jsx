@@ -116,8 +116,13 @@ const Admin = () => {
 
   const updateSettings = async (newSettings) => {
     try {
-      await settingsAPI.update(newSettings);
-      setSettings({ ...settings, ...newSettings });
+      const response = await settingsAPI.update(newSettings);
+      // Use returned settings from server
+      if (response.data) {
+        setSettings(response.data);
+      } else {
+        setSettings({ ...settings, ...newSettings });
+      }
       toast.success('Postavke ažurirane');
     } catch (error) {
       toast.error('Greška pri ažuriranju postavki');
