@@ -469,10 +469,6 @@ async def remove_course_from_user(user_id: str, course_id: str, admin: dict = De
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Korisnik nije pronađen")
     return {"success": True}
-async def delete_course(course_id: str, admin: dict = Depends(get_admin_user)):
-    await db.courses.delete_one({"id": course_id})
-    await db.modules.delete_many({"course_id": course_id})
-    return {"success": True}
 
 # ============== MODULES ROUTES ==============
 
