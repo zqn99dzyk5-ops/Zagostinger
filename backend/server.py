@@ -308,6 +308,12 @@ async def get_courses(program_id: Optional[str] = None):
     if program_id:
         query["program_id"] = program_id
     courses = await db.courses.find(query, {"_id": 0}).sort("order", 1).to_list(100)
+    
+    # Add lesson count for each course
+    for course in courses:
+        lesson_count = await db.lessons.count_documents({"course_id": course["id"]})
+        course["lesson_count"] = lesson_count
+    
     return courses
 
 @api_router.get("/courses/{course_id}")
@@ -316,20 +322,37 @@ async def get_course(course_id: str, current_user: dict = Depends(get_current_us
     if not course:
         raise HTTPException(status_code=404, detail="Kurs nije pronađen")
     
-    # Check subscription access
-    program = await db.programs.find_one({"id": course["program_id"]}, {"_id": 0})
-    if program and program["id"] not in current_user.get("subscriptions", []):
-        if current_user.get("role") != "admin":
-            raise HTTPException(status_code=403, detail="Nemate pristup ovom kursu")
+    # Check subscription access OR direct course access
+    user_courses = current_user.get("courses", [])
+    user_subs = current_user.get("subscriptions", [])
     
-    modules = await db.modules.find({"course_id": course_id}, {"_id": 0}).sort("order", 1).to_list(100)
-    course["modules"] = modules
+    has_access = (
+        current_user.get("role") == "admin" or
+        course_id in user_courses or
+        course.get("program_id") in user_subs
+    )
     
-    for module in modules:
-        videos = await db.videos.find({"module_id": module["id"]}, {"_id": 0}).sort("order", 1).to_list(100)
-        module["videos"] = videos
+    if not has_access:
+        raise HTTPException(status_code=403, detail="Nemate pristup ovom kursu")
+    
+    # Get lessons for this course
+    lessons = await db.lessons.find({"course_id": course_id}, {"_id": 0}).sort("order", 1).to_list(100)
+    course["lessons"] = lessons
     
     return course
+
+@api_router.get("/admin/courses")
+async def admin_get_courses(admin: dict = Depends(get_admin_user)):
+    courses = await db.courses.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+    
+    for course in courses:
+        lesson_count = await db.lessons.count_documents({"course_id": course["id"]})
+        course["lesson_count"] = lesson_count
+        # Get program name
+        program = await db.programs.find_one({"id": course.get("program_id")}, {"_id": 0, "name": 1})
+        course["program_name"] = program.get("name", "N/A") if program else "N/A"
+    
+    return courses
 
 @api_router.post("/admin/courses")
 async def create_course(course: CourseCreate, admin: dict = Depends(get_admin_user)):
@@ -337,7 +360,7 @@ async def create_course(course: CourseCreate, admin: dict = Depends(get_admin_us
     course_dict["id"] = str(uuid.uuid4())
     course_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     await db.courses.insert_one(course_dict)
-    course_dict.pop("_id", None)  # Remove MongoDB _id
+    course_dict.pop("_id", None)
     return course_dict
 
 @api_router.put("/admin/courses/{course_id}")
@@ -348,6 +371,104 @@ async def update_course(course_id: str, course: CourseCreate, admin: dict = Depe
     return {"success": True}
 
 @api_router.delete("/admin/courses/{course_id}")
+async def delete_course(course_id: str, admin: dict = Depends(get_admin_user)):
+    await db.courses.delete_one({"id": course_id})
+    await db.lessons.delete_many({"course_id": course_id})
+    return {"success": True}
+
+# ============== LESSONS ROUTES ==============
+
+@api_router.get("/lessons/{course_id}")
+async def get_lessons(course_id: str, current_user: dict = Depends(get_current_user)):
+    lessons = await db.lessons.find({"course_id": course_id}, {"_id": 0}).sort("order", 1).to_list(100)
+    return lessons
+
+@api_router.get("/lesson/{lesson_id}")
+async def get_lesson(lesson_id: str, current_user: dict = Depends(get_current_user)):
+    lesson = await db.lessons.find_one({"id": lesson_id}, {"_id": 0})
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lekcija nije pronađena")
+    return lesson
+
+@api_router.post("/admin/lessons")
+async def create_lesson(lesson: LessonCreate, admin: dict = Depends(get_admin_user)):
+    lesson_dict = lesson.model_dump()
+    lesson_dict["id"] = str(uuid.uuid4())
+    lesson_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Auto-set order if not provided
+    if lesson_dict.get("order", 0) == 0:
+        count = await db.lessons.count_documents({"course_id": lesson.course_id})
+        lesson_dict["order"] = count + 1
+    
+    await db.lessons.insert_one(lesson_dict)
+    lesson_dict.pop("_id", None)
+    return lesson_dict
+
+@api_router.put("/admin/lessons/{lesson_id}")
+async def update_lesson(lesson_id: str, lesson: LessonCreate, admin: dict = Depends(get_admin_user)):
+    result = await db.lessons.update_one({"id": lesson_id}, {"$set": lesson.model_dump()})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Lekcija nije pronađena")
+    return {"success": True}
+
+@api_router.delete("/admin/lessons/{lesson_id}")
+async def delete_lesson(lesson_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.lessons.delete_one({"id": lesson_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Lekcija nije pronađena")
+    return {"success": True}
+
+@api_router.put("/admin/lessons/reorder")
+async def reorder_lessons(lesson_orders: List[Dict[str, Any]], admin: dict = Depends(get_admin_user)):
+    for item in lesson_orders:
+        await db.lessons.update_one(
+            {"id": item["id"]},
+            {"$set": {"order": item["order"]}}
+        )
+    return {"success": True}
+
+# ============== USER COURSE ASSIGNMENT ==============
+
+@api_router.get("/admin/users/{user_id}/courses")
+async def get_user_courses(user_id: str, admin: dict = Depends(get_admin_user)):
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Korisnik nije pronađen")
+    
+    user_course_ids = user.get("courses", [])
+    courses = await db.courses.find({"id": {"$in": user_course_ids}}, {"_id": 0}).to_list(100)
+    return courses
+
+@api_router.put("/admin/users/{user_id}/courses")
+async def assign_courses_to_user(user_id: str, course_ids: List[str], admin: dict = Depends(get_admin_user)):
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"courses": course_ids}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Korisnik nije pronađen")
+    return {"success": True}
+
+@api_router.post("/admin/users/{user_id}/courses/add")
+async def add_course_to_user(user_id: str, course_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$addToSet": {"courses": course_id}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Korisnik nije pronađen")
+    return {"success": True}
+
+@api_router.post("/admin/users/{user_id}/courses/remove")
+async def remove_course_from_user(user_id: str, course_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$pull": {"courses": course_id}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Korisnik nije pronađen")
+    return {"success": True}
 async def delete_course(course_id: str, admin: dict = Depends(get_admin_user)):
     await db.courses.delete_one({"id": course_id})
     await db.modules.delete_many({"course_id": course_id})
