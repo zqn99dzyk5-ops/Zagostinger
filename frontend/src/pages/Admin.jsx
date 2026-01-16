@@ -365,16 +365,10 @@ const Admin = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 flex justify-between items-center"
+          className="mb-8"
         >
-          <div>
-            <h1 className="heading-2 mb-2">Admin Panel</h1>
-            <p className="text-muted-foreground">Upravljajte svim aspektima platforme</p>
-          </div>
-          <Button onClick={seedData} variant="outline" className="gap-2">
-            <Plus className="w-4 h-4" />
-            Dodaj demo podatke
-          </Button>
+          <h1 className="heading-2 mb-2">Admin Panel</h1>
+          <p className="text-muted-foreground">Upravljajte svim aspektima platforme</p>
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
