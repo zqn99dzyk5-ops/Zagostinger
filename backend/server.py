@@ -216,6 +216,7 @@ async def register(user_data: UserCreate):
         "password": hashed_password,
         "role": "user",
         "subscriptions": [],
+        "courses": [],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -232,7 +233,8 @@ async def register(user_data: UserCreate):
             name=user["name"],
             role=user["role"],
             created_at=user["created_at"],
-            subscriptions=user["subscriptions"]
+            subscriptions=user["subscriptions"],
+            courses=user["courses"]
         )
     )
 
@@ -253,7 +255,8 @@ async def login(login_data: UserLogin):
             name=user["name"],
             role=user["role"],
             created_at=user["created_at"],
-            subscriptions=user.get("subscriptions", [])
+            subscriptions=user.get("subscriptions", []),
+            courses=user.get("courses", [])
         )
     )
 
@@ -265,7 +268,8 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         name=current_user["name"],
         role=current_user["role"],
         created_at=current_user["created_at"],
-        subscriptions=current_user.get("subscriptions", [])
+        subscriptions=current_user.get("subscriptions", []),
+        courses=current_user.get("courses", [])
     )
 
 # ============== PROGRAMS ROUTES ==============
