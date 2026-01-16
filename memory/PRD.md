@@ -92,3 +92,40 @@ Build a premium online academy website called Continental Academy for content mo
 3. Implement multi-language support
 4. Add email notifications for purchases
 5. Create actual course content
+
+---
+
+## Update (January 16, 2026) - Course & Lesson Management
+
+### New Features Added:
+1. **Kursevi (Courses) tab** in Admin Panel
+   - Create/Edit/Delete courses
+   - Set course duration (hours)
+   - Link courses to subscription programs
+   - Expandable accordion to view lessons
+
+2. **Lekcije (Lessons) system**
+   - Add lessons to each course
+   - Each lesson has: title, description, video URL, duration, order
+   - Support for YouTube, Vimeo, and direct video URLs
+   - MUX Playback ID support (for MUX hosted videos)
+   - "Besplatno" (Free) flag for preview lessons
+
+3. **User Course Assignment**
+   - "Kursevi" button for each user in Admin > Korisnici
+   - Toggle switch to grant/revoke course access
+   - Works independently from subscription programs
+
+### Backend Endpoints Added:
+- GET /api/admin/courses - List all courses with lesson count
+- POST/PUT/DELETE /api/admin/courses - CRUD operations
+- GET /api/lessons/{course_id} - Get lessons for a course  
+- POST/PUT/DELETE /api/admin/lessons - CRUD operations
+- PUT /api/admin/lessons/reorder - Reorder lessons
+- GET/PUT /api/admin/users/{id}/courses - Manage user course access
+- POST /api/admin/users/{id}/courses/add - Add single course
+- POST /api/admin/users/{id}/courses/remove - Remove single course
+
+### Test Data:
+- Course: "TikTok za početnike" (3 lessons, 10h)
+- Student: student@test.com / student123
