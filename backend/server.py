@@ -615,8 +615,8 @@ async def delete_result(result_id: str, admin: dict = Depends(get_admin_user)):
 async def get_settings():
     settings = await db.settings.find_one({"type": "site"}, {"_id": 0})
     if not settings:
-        # Return default settings
-        settings = {
+        # Create default settings in database
+        default_settings = {
             "type": "site",
             "site_name": "Continental Academy",
             "hero_video_url": "",
@@ -628,17 +628,42 @@ async def get_settings():
             "contact_email": "info@continentalacademy.com",
             "available_themes": ["dark-luxury", "clean-light", "midnight-purple", "education-classic"]
         }
+        await db.settings.insert_one(default_settings)
+        default_settings.pop("_id", None)
+        return default_settings
     return settings
 
 @api_router.put("/admin/settings")
 async def update_settings(settings: SiteSettingsUpdate, admin: dict = Depends(get_admin_user)):
     update_data = {k: v for k, v in settings.model_dump().items() if v is not None}
-    await db.settings.update_one(
+    
+    # Ensure we have a settings document first
+    existing = await db.settings.find_one({"type": "site"})
+    if not existing:
+        # Create default settings first
+        default_settings = {
+            "type": "site",
+            "site_name": "Continental Academy",
+            "hero_video_url": "",
+            "hero_headline": "Monetizuj svoj sadržaj. Pretvori znanje u prihod.",
+            "hero_subheadline": "Nauči kako da zaradiš na TikTok, YouTube i Facebook platformama sa našim ekspertnim vodičima.",
+            "discord_invite_url": "https://discord.gg/placeholder",
+            "theme": "dark-luxury",
+            "social_links": {},
+            "contact_email": "info@continentalacademy.com",
+            "available_themes": ["dark-luxury", "clean-light", "midnight-purple", "education-classic"]
+        }
+        await db.settings.insert_one(default_settings)
+    
+    # Now update with new values
+    result = await db.settings.update_one(
         {"type": "site"},
-        {"$set": update_data},
-        upsert=True
+        {"$set": update_data}
     )
-    return {"success": True}
+    
+    # Return updated settings
+    updated = await db.settings.find_one({"type": "site"}, {"_id": 0})
+    return updated
 
 # ============== ANALYTICS ROUTES ==============
 
