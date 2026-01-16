@@ -3,13 +3,14 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   BookOpen, Play, Clock, CheckCircle, MessageCircle, 
-  ChevronRight, Award, Loader2 
+  ChevronRight, Award, Loader2, GraduationCap
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
+import { Badge } from '../components/ui/badge';
 import { useAuth } from '../lib/auth';
-import { programsAPI, coursesAPI, paymentsAPI } from '../lib/api';
+import { programsAPI, coursesAPI, paymentsAPI, lessonsAPI } from '../lib/api';
 import { toast } from 'sonner';
 
 const Dashboard = () => {
@@ -17,7 +18,8 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const [programs, setPrograms] = useState([]);
   const [subscribedPrograms, setSubscribedPrograms] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [userCourses, setUserCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,12 +50,29 @@ const Dashboard = () => {
         ]);
         
         setPrograms(programsRes.data);
-        setCourses(coursesRes.data);
+        setAllCourses(coursesRes.data);
         
         // Filter subscribed programs
         const userSubs = user?.subscriptions || [];
         const subProgs = programsRes.data.filter(p => userSubs.includes(p.id));
         setSubscribedPrograms(subProgs);
+        
+        // Get directly assigned courses
+        const userCourseIds = user?.courses || [];
+        const assignedCourses = coursesRes.data.filter(c => userCourseIds.includes(c.id));
+        
+        // Also get courses from subscribed programs
+        const programCourses = coursesRes.data.filter(c => userSubs.includes(c.program_id));
+        
+        // Combine and deduplicate
+        const allUserCourses = [...assignedCourses];
+        programCourses.forEach(pc => {
+          if (!allUserCourses.find(c => c.id === pc.id)) {
+            allUserCourses.push(pc);
+          }
+        });
+        
+        setUserCourses(allUserCourses);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -71,6 +90,8 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  const hasAccess = userCourses.length > 0 || subscribedPrograms.length > 0;
 
   return (
     <div className="min-h-screen pt-24 pb-16" data-testid="dashboard-page">
@@ -91,11 +112,11 @@ const Dashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-primary" />
+                  <GraduationCap className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{subscribedPrograms.length}</p>
-                  <p className="text-sm text-muted-foreground">Aktivne pretplate</p>
+                  <p className="text-2xl font-bold">{userCourses.length}</p>
+                  <p className="text-sm text-muted-foreground">Dostupnih kurseva</p>
                 </div>
               </div>
             </CardContent>
@@ -105,11 +126,11 @@ const Dashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-500" />
+                  <BookOpen className="w-6 h-6 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-sm text-muted-foreground">Završenih lekcija</p>
+                  <p className="text-2xl font-bold">{subscribedPrograms.length}</p>
+                  <p className="text-sm text-muted-foreground">Aktivnih pretplata</p>
                 </div>
               </div>
             </CardContent>
@@ -130,64 +151,59 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Subscribed Programs & Courses */}
-        {subscribedPrograms.length > 0 ? (
+        {/* User Courses */}
+        {hasAccess ? (
           <section className="mb-12">
             <h2 className="heading-3 mb-6">Vaši kursevi</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {subscribedPrograms.map((program) => {
-                const programCourses = courses.filter(c => c.program_id === program.id);
-                return (
-                  <Card key={program.id} className="luxury-card group" data-testid={`subscribed-program-${program.id}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <BookOpen className="w-6 h-6 text-primary" />
-                        </div>
-                        <span className="px-3 py-1 rounded-full text-xs bg-green-500/10 text-green-500 font-medium">
-                          Aktivno
+              {userCourses.map((course) => (
+                <Card key={course.id} className="luxury-card group" data-testid={`user-course-${course.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <GraduationCap className="w-6 h-6 text-primary" />
+                      </div>
+                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                        Aktivan
+                      </Badge>
+                    </div>
+                    <CardTitle className="font-heading text-xl mt-4">{course.title}</CardTitle>
+                    <CardDescription>{course.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                      <span className="flex items-center gap-1">
+                        <Play className="w-4 h-4" />
+                        {course.lesson_count || 0} lekcija
+                      </span>
+                      {course.duration_hours && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {course.duration_hours}h
                         </span>
-                      </div>
-                      <CardTitle className="font-heading text-xl mt-4">{program.name}</CardTitle>
-                      <CardDescription>{program.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3 mb-6">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Napredak</span>
-                          <span>0%</span>
-                        </div>
-                        <Progress value={0} className="h-2" />
-                      </div>
-                      
-                      {programCourses.length > 0 && (
-                        <div className="space-y-2 mb-6">
-                          {programCourses.slice(0, 3).map((course) => (
-                            <Link 
-                              key={course.id} 
-                              to={`/course/${course.id}`}
-                              className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                            >
-                              <Play className="w-4 h-4 text-primary" />
-                              <span className="text-sm truncate">{course.title}</span>
-                            </Link>
-                          ))}
-                        </div>
                       )}
-                      
-                      <Button 
-                        className="w-full bg-primary text-primary-foreground rounded-full group-hover:gold-glow transition-shadow"
-                        asChild
-                      >
-                        <Link to={`/course/${programCourses[0]?.id || ''}`}>
-                          Nastavi učenje
-                          <ChevronRight className="w-4 h-4 ml-2" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                    
+                    <div className="space-y-3 mb-6">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Napredak</span>
+                        <span>0%</span>
+                      </div>
+                      <Progress value={0} className="h-2" />
+                    </div>
+                    
+                    <Button 
+                      className="w-full bg-primary text-primary-foreground rounded-full group-hover:gold-glow transition-shadow"
+                      asChild
+                    >
+                      <Link to={`/course/${course.id}`}>
+                        Započni učenje
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </section>
         ) : (
@@ -195,11 +211,11 @@ const Dashboard = () => {
             <Card className="luxury-card text-center py-12">
               <CardContent>
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                  <BookOpen className="w-8 h-8 text-primary" />
+                  <GraduationCap className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="heading-3 mb-4">Nemate aktivnih pretplata</h3>
+                <h3 className="heading-3 mb-4">Nemate aktivnih kurseva</h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Pretplatite se na neki od naših programa i započnite svoje putovanje ka uspjehu.
+                  Pretplatite se na neki od naših programa ili kontaktirajte admina za pristup kursevima.
                 </p>
                 <Button asChild className="bg-primary text-primary-foreground rounded-full">
                   <Link to="/#programs">
@@ -209,6 +225,30 @@ const Dashboard = () => {
                 </Button>
               </CardContent>
             </Card>
+          </section>
+        )}
+
+        {/* Subscribed Programs */}
+        {subscribedPrograms.length > 0 && (
+          <section className="mb-12">
+            <h2 className="heading-3 mb-6">Vaše pretplate</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {subscribedPrograms.map((program) => (
+                <Card key={program.id} className="luxury-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{program.name}</p>
+                        <p className="text-xs text-muted-foreground">Aktivna pretplata</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </section>
         )}
 
