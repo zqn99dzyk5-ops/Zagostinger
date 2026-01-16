@@ -28,6 +28,11 @@ export const SettingsProvider = ({ children }) => {
       const response = await settingsAPI.get();
       setSettings(response.data);
       
+      // Apply theme
+      if (response.data.theme) {
+        applyTheme(response.data.theme);
+      }
+      
       // Update favicon dynamically
       if (response.data.favicon_url) {
         updateFavicon(response.data.favicon_url);
@@ -42,6 +47,15 @@ export const SettingsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyTheme = (theme) => {
+    // Remove any existing theme
+    document.documentElement.removeAttribute('data-theme');
+    // Apply new theme
+    document.documentElement.setAttribute('data-theme', theme);
+    // Store in localStorage for persistence
+    localStorage.setItem('theme', theme);
   };
 
   const updateFavicon = (url) => {
@@ -64,6 +78,11 @@ export const SettingsProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    // Apply cached theme immediately to prevent flash
+    const cachedTheme = localStorage.getItem('theme');
+    if (cachedTheme) {
+      applyTheme(cachedTheme);
+    }
     loadSettings();
   }, []);
 
@@ -72,6 +91,11 @@ export const SettingsProvider = ({ children }) => {
       const response = await settingsAPI.update(newSettings);
       if (response.data) {
         setSettings(response.data);
+        
+        // Apply theme if changed
+        if (response.data.theme) {
+          applyTheme(response.data.theme);
+        }
         
         // Update favicon if changed
         if (response.data.favicon_url) {
@@ -90,7 +114,7 @@ export const SettingsProvider = ({ children }) => {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, updateSettings, refreshSettings: loadSettings }}>
+    <SettingsContext.Provider value={{ settings, loading, updateSettings, refreshSettings: loadSettings, applyTheme }}>
       {children}
     </SettingsContext.Provider>
   );
