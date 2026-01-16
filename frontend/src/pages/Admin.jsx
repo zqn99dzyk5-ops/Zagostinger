@@ -928,9 +928,14 @@ const Admin = () => {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
+            {/* Branding */}
             <Card className="luxury-card">
               <CardHeader>
-                <CardTitle>Opće postavke</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="w-5 h-5" />
+                  Branding
+                </CardTitle>
+                <CardDescription>Logo, favicon i naziv stranice</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -940,18 +945,68 @@ const Admin = () => {
                       value={settings.site_name || ''} 
                       onChange={(e) => setSettings({ ...settings, site_name: e.target.value })}
                       className="bg-input/50"
+                      placeholder="Continental Academy"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Kontakt email</Label>
-                    <Input 
-                      value={settings.contact_email || ''} 
-                      onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
-                      className="bg-input/50"
-                    />
+                    <Label>Valuta</Label>
+                    <Select 
+                      value={settings.currency || 'EUR'}
+                      onValueChange={(value) => setSettings({ ...settings, currency: value })}
+                    >
+                      <SelectTrigger className="bg-input/50">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="BAM">BAM (KM)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
+                <div className="space-y-2">
+                  <Label>Logo URL</Label>
+                  <Input 
+                    value={settings.logo_url || ''} 
+                    onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
+                    className="bg-input/50"
+                    placeholder="https://..."
+                  />
+                  {settings.logo_url && (
+                    <div className="mt-2 p-4 bg-white/5 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-2">Preview:</p>
+                      <img src={settings.logo_url} alt="Logo preview" className="h-12 object-contain" />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Favicon URL</Label>
+                  <Input 
+                    value={settings.favicon_url || ''} 
+                    onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
+                    className="bg-input/50"
+                    placeholder="https://..."
+                  />
+                  {settings.favicon_url && (
+                    <div className="mt-2 p-4 bg-white/5 rounded-lg flex items-center gap-3">
+                      <p className="text-xs text-muted-foreground">Preview:</p>
+                      <img src={settings.favicon_url} alt="Favicon preview" className="w-8 h-8 object-contain" />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Hero Section */}
+            <Card className="luxury-card">
+              <CardHeader>
+                <CardTitle>Hero Sekcija</CardTitle>
+                <CardDescription>Glavni banner na početnoj stranici</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label>Hero naslov</Label>
                   <Input 
@@ -977,8 +1032,37 @@ const Admin = () => {
                     value={settings.hero_video_url || ''} 
                     onChange={(e) => setSettings({ ...settings, hero_video_url: e.target.value })}
                     className="bg-input/50"
-                    placeholder="https://..."
+                    placeholder="https://youtube.com/watch?v=..."
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Contact & Social */}
+            <Card className="luxury-card">
+              <CardHeader>
+                <CardTitle>Kontakt i Društvene mreže</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Kontakt email</Label>
+                    <Input 
+                      value={settings.contact_email || ''} 
+                      onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
+                      className="bg-input/50"
+                      placeholder="info@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Kontakt telefon</Label>
+                    <Input 
+                      value={settings.contact_phone || ''} 
+                      onChange={(e) => setSettings({ ...settings, contact_phone: e.target.value })}
+                      className="bg-input/50"
+                      placeholder="+387 xx xxx xxx"
+                    />
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
@@ -991,6 +1075,71 @@ const Admin = () => {
                   />
                 </div>
                 
+                <div className="border-t border-white/10 pt-6">
+                  <Label className="text-base mb-4 block">Društvene mreže</Label>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Instagram</Label>
+                      <Input 
+                        value={settings.social_links?.instagram || ''} 
+                        onChange={(e) => setSettings({ 
+                          ...settings, 
+                          social_links: { ...settings.social_links, instagram: e.target.value }
+                        })}
+                        className="bg-input/50"
+                        placeholder="https://instagram.com/..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">YouTube</Label>
+                      <Input 
+                        value={settings.social_links?.youtube || ''} 
+                        onChange={(e) => setSettings({ 
+                          ...settings, 
+                          social_links: { ...settings.social_links, youtube: e.target.value }
+                        })}
+                        className="bg-input/50"
+                        placeholder="https://youtube.com/..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">TikTok</Label>
+                      <Input 
+                        value={settings.social_links?.tiktok || ''} 
+                        onChange={(e) => setSettings({ 
+                          ...settings, 
+                          social_links: { ...settings.social_links, tiktok: e.target.value }
+                        })}
+                        className="bg-input/50"
+                        placeholder="https://tiktok.com/..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Facebook</Label>
+                      <Input 
+                        value={settings.social_links?.facebook || ''} 
+                        onChange={(e) => setSettings({ 
+                          ...settings, 
+                          social_links: { ...settings.social_links, facebook: e.target.value }
+                        })}
+                        className="bg-input/50"
+                        placeholder="https://facebook.com/..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Appearance */}
+            <Card className="luxury-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="w-5 h-5" />
+                  Izgled
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label>Tema</Label>
                   <Select 
@@ -1009,16 +1158,52 @@ const Admin = () => {
                   </Select>
                 </div>
                 
-                <Button 
-                  onClick={() => updateSettings(settings)}
-                  className="bg-primary text-primary-foreground"
-                  data-testid="save-settings-btn"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Spremi postavke
-                </Button>
+                <div className="space-y-2">
+                  <Label>Footer tekst</Label>
+                  <Textarea 
+                    value={settings.footer_text || ''} 
+                    onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })}
+                    className="bg-input/50"
+                    rows={2}
+                    placeholder="Kratki opis koji se prikazuje u footeru..."
+                  />
+                </div>
+                
+                <div className="border-t border-white/10 pt-6 space-y-4">
+                  <Label className="text-base">Sekcije na početnoj stranici</Label>
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                    <div>
+                      <p className="font-medium">Galerija rezultata</p>
+                      <p className="text-sm text-muted-foreground">Prikaži sekciju sa rezultatima studenata</p>
+                    </div>
+                    <Switch 
+                      checked={settings.show_results_section !== false} 
+                      onCheckedChange={(v) => setSettings({ ...settings, show_results_section: v })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                    <div>
+                      <p className="font-medium">FAQ sekcija</p>
+                      <p className="text-sm text-muted-foreground">Prikaži sekciju sa često postavljanim pitanjima</p>
+                    </div>
+                    <Switch 
+                      checked={settings.show_faq_section !== false} 
+                      onCheckedChange={(v) => setSettings({ ...settings, show_faq_section: v })}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
+                
+            <Button 
+              onClick={() => updateSettings(settings)}
+              className="bg-primary text-primary-foreground w-full md:w-auto"
+              size="lg"
+              data-testid="save-settings-btn"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Spremi sve postavke
+            </Button>
           </TabsContent>
         </Tabs>
 
