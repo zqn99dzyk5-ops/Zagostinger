@@ -272,7 +272,7 @@ const Dashboard = () => {
                   className="bg-[#5865F2] hover:bg-[#5865F2]/90 text-white rounded-full px-6"
                   asChild
                 >
-                  <a href="https://discord.gg/placeholder" target="_blank" rel="noopener noreferrer">
+                  <a href={settings.discord_invite_url || '#'} target="_blank" rel="noopener noreferrer">
                     Kontaktiraj support
                   </a>
                 </Button>
