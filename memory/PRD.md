@@ -1,131 +1,257 @@
-# Continental Academy - PRD
+# Continental Academy - Product Requirements Document
 
 ## Original Problem Statement
-Build a premium online academy website called Continental Academy for content monetization education. Features include:
-- Homepage with hero video, programs, results gallery, FAQ, Discord CTA
-- Shop for TikTok/YouTube/Facebook accounts
-- User dashboard with course access
-- Admin panel for full CMS control
-- Dark luxury theme, Bosnian language primary
 
-## User Choices
-- Stripe: Test keys (already available)
-- Video hosting: MUX (placeholder for API keys)
-- Auth: Custom JWT
-- Analytics: Standard (no Google Analytics)
-- Everything configurable via Admin panel
+Build a modern, premium online academy website called Continental Academy with:
+- Main language: Bosnian (with support for English and German)
+- Design: Minimalist, luxury dark theme with soft accents
+- Homepage: Hero section with video, Education Programs, Student Results, "Why Us", FAQ, Discord CTA
+- Shop: Digital products (TikTok/YouTube/Facebook accounts)
+- User Dashboard: View subscriptions, access courses, video lessons
+- Admin Panel: Full management capabilities
+- Payments: Stripe integration
+- Original: Python/FastAPI → **Migrated to Node.js/Express**
 
-## Architecture
-- **Backend**: FastAPI + MongoDB
-- **Frontend**: React + Tailwind CSS + Shadcn UI
-- **Payments**: Stripe (emergentintegrations library)
-- **Video**: MUX (placeholder, needs API keys)
-- **Auth**: JWT tokens with bcrypt password hashing
+## Tech Stack
 
-## User Personas
-1. **Content Creator** - Wants to learn monetization, purchases programs
-2. **Account Buyer** - Purchases pre-made social media accounts
-3. **Admin** - Manages all content, users, settings
+### Current (Migrated - January 2025)
+- **Backend**: Node.js, Express.js, MongoDB, JWT Authentication
+- **Frontend**: React, TailwindCSS, Framer Motion, Shadcn/UI
+- **Database**: MongoDB (Local for dev, Atlas for production)
+- **Payments**: Stripe
+- **Deployment**: Docker, Docker Compose (ready for Dokploy VPS)
 
-## Core Requirements
-- [x] Premium dark luxury design
-- [x] Bosnian language content
-- [x] Subscription programs (Stripe)
-- [x] Shop marketplace
-- [x] User dashboard
-- [x] Admin panel with full CMS
-- [x] JWT authentication
-- [x] Mobile responsive
+### Previous (Deprecated)
+- Python/FastAPI (completely removed)
+
+## What's Been Implemented ✅
+
+### Backend (Node.js/Express)
+- [x] Express.js server with MongoDB connection
+- [x] JWT authentication (register, login, get current user)
+- [x] Admin middleware for protected routes
+- [x] User management (CRUD, role assignment, course assignment)
+- [x] Programs management (CRUD)
+- [x] Courses management (CRUD with lessons)
+- [x] Lessons management (CRUD, reordering)
+- [x] Shop products management (CRUD)
+- [x] FAQs management (CRUD)
+- [x] Results/Gallery management (CRUD)
+- [x] Site settings management
 - [x] Analytics tracking
+- [x] Stripe payment integration (subscriptions & one-time)
+- [x] Default admin/student user creation on startup
 
-## What's Been Implemented (January 15, 2026)
-### Backend (server.py)
-- Auth: register, login, me endpoints
-- Programs CRUD (admin)
-- Courses, Modules, Videos CRUD (admin)
-- Shop Products CRUD (admin)
-- FAQs CRUD (admin)
-- Results gallery (admin)
-- Site settings (admin)
-- Analytics events tracking
-- User management (admin)
-- Stripe payment integration (subscriptions & products)
+### Frontend (React)
+- [x] Homepage with all sections (Hero, Programs, Results, FAQ, Discord)
+- [x] Login/Register pages
+- [x] User Dashboard with course access
+- [x] Course View with video lessons
+- [x] Shop page with category filters
+- [x] Comprehensive Admin Panel:
+  - Overview with analytics
+  - Users management
+  - Courses & Lessons management
+  - Programs management
+  - Shop products management
+  - Content (FAQs, Results) management
+  - Settings (branding, theme, social links, section visibility)
+- [x] Theme switching (4 themes)
+- [x] Toast notifications
 
-### Frontend
-- Homepage: Hero, Programs, Results Gallery, Why Us, FAQ, Discord CTA
-- Auth: Login, Register pages
-- Dashboard: User subscriptions and courses
-- Course Viewer: Video player with module sidebar
-- Shop: Product categories, purchase flow
-- Admin Panel: Overview, Users, Programs, Shop, Content, Settings tabs
+### Deployment Ready
+- [x] Docker files for backend and frontend
+- [x] Docker Compose configuration
+- [x] Environment variable templates (.env.example)
+- [x] README with deployment instructions
 
-### Design
-- Dark luxury theme with muted gold (#D4AF37) accents
-- Playfair Display (headings) + DM Sans (body) fonts
-- Glass-morphism cards, smooth animations
+## Database Schema
 
-## Prioritized Backlog
-### P0 (Critical)
-- [x] Core homepage and navigation
-- [x] User authentication
-- [x] Program subscriptions
-- [x] Admin content management
+### Users
+```javascript
+{
+  name: String,
+  email: String (unique),
+  password: String (hashed),
+  role: 'user' | 'admin',
+  subscriptions: [String], // program IDs
+  courses: [String], // directly assigned course IDs
+  created_at: Date
+}
+```
 
-### P1 (High)
-- [ ] MUX video integration (needs API keys)
-- [ ] Email notifications
-- [ ] Multi-language support (EN, DE)
-- [ ] Payment webhook improvements
+### Programs
+```javascript
+{
+  name: String,
+  description: String,
+  price: Number,
+  currency: String,
+  features: [String],
+  is_active: Boolean,
+  stripe_price_id: String
+}
+```
 
-### P2 (Medium)
-- [ ] Course progress tracking
-- [ ] Certificate generation
-- [ ] Social media login
-- [ ] Advanced analytics dashboard
+### Courses
+```javascript
+{
+  title: String,
+  description: String,
+  program_id: String,
+  thumbnail_url: String,
+  duration_hours: Number,
+  order: Number,
+  is_active: Boolean
+}
+```
+
+### Lessons
+```javascript
+{
+  title: String,
+  description: String,
+  course_id: String,
+  video_url: String,
+  mux_playback_id: String,
+  duration_minutes: Number,
+  order: Number,
+  is_free: Boolean
+}
+```
+
+### Settings
+```javascript
+{
+  type: 'site',
+  site_name: String,
+  logo_url: String,
+  favicon_url: String,
+  hero_headline: String,
+  hero_subheadline: String,
+  hero_video_url: String,
+  discord_invite_url: String,
+  theme: String,
+  social_links: Object,
+  contact_email: String,
+  contact_phone: String,
+  footer_text: String,
+  show_results_section: Boolean,
+  show_faq_section: Boolean,
+  currency: String
+}
+```
+
+## API Endpoints
+
+### Public
+- `GET /api/health` - Health check
+- `GET /api/programs` - List active programs
+- `GET /api/courses` - List active courses
+- `GET /api/settings` - Get site settings
+- `GET /api/faqs` - List FAQs
+- `GET /api/results` - List student results
+- `GET /api/shop/products` - List shop products
+- `POST /api/analytics/event` - Track analytics event
+
+### Authentication
+- `POST /api/auth/register` - Register user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user (protected)
+
+### Protected User Routes
+- `GET /api/courses/:id` - Get course with lessons (access check)
+- `GET /api/lesson/:id` - Get lesson (access check)
+
+### Admin Routes (all protected)
+- Users: `GET /api/admin/users`, `PUT /api/admin/users/:id/role`
+- User Courses: `GET/PUT/POST /api/admin/users/:id/courses/*`
+- Programs: CRUD at `/api/admin/programs`
+- Courses: CRUD at `/api/admin/courses`
+- Lessons: CRUD at `/api/admin/lessons`
+- Shop: CRUD at `/api/admin/shop/products`
+- FAQs: CRUD at `/api/admin/faqs`
+- Results: CRUD at `/api/admin/results`
+- Settings: `GET/PUT /api/admin/settings`
+- Analytics: `GET /api/admin/analytics`
+
+### Payments
+- `POST /api/payments/checkout/subscription`
+- `POST /api/payments/checkout/product`
+- `GET /api/payments/status/:sessionId`
+- `POST /api/payments/webhook`
 
 ## Test Credentials
-- Admin: admin@test.com / admin123
 
-## Next Tasks
-1. Configure MUX API keys for video hosting
-2. Add real Discord invite link
-3. Implement multi-language support
-4. Add email notifications for purchases
-5. Create actual course content
+- **Admin**: admin@test.com / admin123
+- **Student**: student@test.com / student123
+
+## Testing Status
+
+All tests passed (36/36):
+- Backend API tests: 100%
+- Frontend integration: 100%
+- See `/app/test_reports/iteration_2.json`
+
+## Remaining Tasks (P2)
+
+### Internationalization (i18n)
+- [ ] Add react-i18next
+- [ ] Create translation files (bs, en, de)
+- [ ] Language switcher in UI
+
+### Video Hosting Integration
+- [ ] MUX video upload integration
+- [ ] Video progress tracking
+
+### Enhanced Features
+- [ ] Email notifications (welcome, payment confirmation)
+- [ ] Course completion certificates
+- [ ] Progress tracking for lessons
+- [ ] Student reviews/ratings
+
+## Deployment Notes
+
+### MongoDB Atlas Setup
+1. Create cluster on MongoDB Atlas
+2. Add database user with password
+3. Configure Network Access (whitelist VPS IP)
+4. Get connection string
+
+### Dokploy VPS Deployment
+1. Push to GitHub
+2. Connect repo to Dokploy
+3. Set environment variables:
+   - `MONGO_URL` - Atlas connection string
+   - `DB_NAME` - Database name
+   - `JWT_SECRET` - Strong secret key
+   - `STRIPE_API_KEY` - Live Stripe key
+   - `REACT_APP_BACKEND_URL` - API URL
+4. Deploy!
+
+## File Structure
+
+```
+/app/
+├── backend/
+│   ├── models/          # Mongoose models
+│   ├── routes/          # Express routes
+│   ├── middleware/      # Auth middleware
+│   ├── server.js        # Main entry point
+│   ├── Dockerfile
+│   └── .env.example
+├── frontend/
+│   ├── src/
+│   │   ├── components/  # UI components
+│   │   ├── pages/       # React pages
+│   │   └── lib/         # Utilities, API, contexts
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── .env.example
+├── docker-compose.yml
+└── README.md
+```
 
 ---
-
-## Update (January 16, 2026) - Course & Lesson Management
-
-### New Features Added:
-1. **Kursevi (Courses) tab** in Admin Panel
-   - Create/Edit/Delete courses
-   - Set course duration (hours)
-   - Link courses to subscription programs
-   - Expandable accordion to view lessons
-
-2. **Lekcije (Lessons) system**
-   - Add lessons to each course
-   - Each lesson has: title, description, video URL, duration, order
-   - Support for YouTube, Vimeo, and direct video URLs
-   - MUX Playback ID support (for MUX hosted videos)
-   - "Besplatno" (Free) flag for preview lessons
-
-3. **User Course Assignment**
-   - "Kursevi" button for each user in Admin > Korisnici
-   - Toggle switch to grant/revoke course access
-   - Works independently from subscription programs
-
-### Backend Endpoints Added:
-- GET /api/admin/courses - List all courses with lesson count
-- POST/PUT/DELETE /api/admin/courses - CRUD operations
-- GET /api/lessons/{course_id} - Get lessons for a course  
-- POST/PUT/DELETE /api/admin/lessons - CRUD operations
-- PUT /api/admin/lessons/reorder - Reorder lessons
-- GET/PUT /api/admin/users/{id}/courses - Manage user course access
-- POST /api/admin/users/{id}/courses/add - Add single course
-- POST /api/admin/users/{id}/courses/remove - Remove single course
-
-### Test Data:
-- Course: "TikTok za početnike" (3 lessons, 10h)
-- Student: student@test.com / student123
+*Last updated: January 19, 2025*
+*Backend migrated from Python/FastAPI to Node.js/Express*
