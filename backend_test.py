@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class ContinentalAcademyAPITester:
-    def __init__(self, base_url="https://eduplatform-93.preview.emergentagent.com"):
+    def __init__(self, base_url="https://edu-platform-153.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.admin_token = None
