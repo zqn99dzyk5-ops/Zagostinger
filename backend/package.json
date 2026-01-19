@@ -1,15 +1,18 @@
 {
-  "name": "continental-academy-backend",
+  "name": "continental-academy",
   "version": "1.0.0",
-  "description": "Continental Academy API - Node.js/Express",
-  "main": "server.js",
+  "description": "Continental Academy - Online Education Platform",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node app.js",
+    "build": "echo 'Build complete'"
   },
-  "keywords": [],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["education", "academy", "courses"],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
