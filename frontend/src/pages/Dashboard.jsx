@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 const Dashboard = () => {
   const { user, refreshUser } = useAuth();
+  const { settings } = useSettings();
   const [searchParams] = useSearchParams();
   const [programs, setPrograms] = useState([]);
   const [subscribedPrograms, setSubscribedPrograms] = useState([]);
