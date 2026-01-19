@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../lib/auth';
+import { useSettings } from '../lib/settings';
 import { programsAPI, coursesAPI, paymentsAPI, lessonsAPI } from '../lib/api';
 import { toast } from 'sonner';
 
