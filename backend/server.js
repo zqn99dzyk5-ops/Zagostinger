@@ -2,137 +2,155 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const crypto = require('crypto');
 
-// Import routes
+// Routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
 const paymentRoutes = require('./routes/payments');
 
-// Import models for initialization
+// Models
 const User = require('./models/User');
 const Settings = require('./models/Settings');
 
 const app = express();
 const PORT = process.env.PORT || 8001;
 
-// Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGINS === '*' ? true : process.env.CORS_ORIGINS?.split(','),
-  credentials: true
-}));
+/* =======================
+   CORS
+======================= */
+const corsOrigins =
+  process.env.CORS_ORIGINS === '*'
+    ? true
+    : process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+    : ['http://localhost:3000'];
 
-// Parse JSON (except for Stripe webhook)
-app.use((req, res, next) => {
-  if (req.originalUrl === '/api/payments/webhook') {
-    next();
-  } else {
-    express.json()(req, res, next);
-  }
-});
+app.use(
+  cors({
+    origin: corsOrigins,
+    credentials: true,
+  })
+);
 
-// Health check endpoint
+/* =======================
+   BODY PARSERS
+======================= */
+
+// Stripe webhook needs raw body
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
+// Everything else uses JSON
+app.use(express.json({ limit: '1mb' }));
+
+/* =======================
+   HEALTH CHECK
+======================= */
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     service: 'Continental Academy API',
     version: '1.0.0',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
-// Routes
+/* =======================
+   ROUTES
+======================= */
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api', publicRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api', publicRoutes);
 
-// Initialize default data
+/* =======================
+   ANALYTICS (FIX ZA 405)
+======================= */
+app.post('/api/analytics/event', async (req, res) => {
+  try {
+    // možeš kasnije spremati u DB
+    res.status(204).end(); // silent success
+  } catch {
+    res.status(204).end();
+  }
+});
+
+/* =======================
+   INITIAL DATA
+======================= */
 const initializeDefaults = async () => {
   try {
-    // Create default settings if not exists
     const existingSettings = await Settings.findOne({ type: 'site' });
     if (!existingSettings) {
-      const settings = new Settings({ type: 'site' });
-      await settings.save();
+      await new Settings({ type: 'site' }).save();
       console.log('✓ Default settings created');
     }
-    
-    // Create admin user if no users exist
+
     const userCount = await User.countDocuments();
     if (userCount === 0) {
-      const adminUser = new User({
+      const adminPassword = crypto.randomBytes(8).toString('hex');
+
+      await new User({
         name: 'Admin',
         email: 'admin@test.com',
-        password: 'admin123',
-        role: 'admin'
-      });
-      await adminUser.save();
-      console.log('✓ Default admin user created (admin@test.com / admin123)');
-      
-      // Also create a student user
-      const studentUser = new User({
+        password: adminPassword,
+        role: 'admin',
+      }).save();
+
+      await new User({
         name: 'Student',
         email: 'student@test.com',
         password: 'student123',
-        role: 'user'
-      });
-      await studentUser.save();
-      console.log('✓ Default student user created (student@test.com / student123)');
+        role: 'user',
+      }).save();
+
+      console.log('✓ Admin user created');
+      console.log(`  admin@test.com / ${adminPassword}`);
     }
-  } catch (error) {
-    console.error('Error initializing defaults:', error);
+  } catch (err) {
+    console.error('Error initializing defaults:', err);
   }
 };
 
-// Connect to MongoDB and start server
+/* =======================
+   START SERVER
+======================= */
 const startServer = async () => {
   try {
-    const mongoUrl = process.env.MONGO_URL;
-    const dbName = process.env.DB_NAME || 'continental_academy';
-    
-    if (!mongoUrl) {
-      console.error('MONGO_URL not set in environment variables');
+    if (!process.env.MONGO_URL) {
+      console.error('❌ MONGO_URL not set');
       process.exit(1);
     }
-    
-    console.log('Connecting to MongoDB...');
-    
-    // Connect with database name
-    await mongoose.connect(mongoUrl, {
-      dbName: dbName,
+
+    await mongoose.connect(process.env.MONGO_URL, {
+      dbName: process.env.DB_NAME || 'continental_academy',
       serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
     });
-    
-    console.log(`✓ Connected to MongoDB (database: ${dbName})`);
-    
-    // Initialize default data
+
+    console.log('✓ MongoDB connected');
+
     await initializeDefaults();
-    
-    // Start server
+
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✓ Server running on http://0.0.0.0:${PORT}`);
-      console.log(`  Health check: http://localhost:${PORT}/api/health`);
+      console.log(`✓ Server running on http://localhost:${PORT}`);
     });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+  } catch (err) {
+    console.error('❌ Failed to start server:', err);
     process.exit(1);
   }
 };
 
-// Handle graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\nShutting down gracefully...');
+/* =======================
+   GRACEFUL SHUTDOWN
+======================= */
+const shutdown = async () => {
+  console.log('\nShutting down...');
   await mongoose.connection.close();
   process.exit(0);
-});
+};
 
-process.on('SIGTERM', async () => {
-  console.log('\nShutting down gracefully...');
-  await mongoose.connection.close();
-  process.exit(0);
-});
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
-// Start the server
 startServer();
