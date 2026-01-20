@@ -29,21 +29,27 @@ const Home = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoading(true);
         const [programsRes, faqsRes, resultsRes, settingsRes] = await Promise.all([
           programsAPI.getAll(),
           faqsAPI.getAll(),
           resultsAPI.getAll(),
           settingsAPI.get()
         ]);
-        setPrograms(programsRes.data);
-        setFaqs(faqsRes.data);
-        setResults(resultsRes.data);
-        setSettings(settingsRes.data);
+        
+        // Sigurnosno postavljanje podataka uz provjeru postojanja niza
+        setPrograms(programsRes?.data || []);
+        setFaqs(faqsRes?.data || []);
+        setResults(resultsRes?.data || []);
+        setSettings(settingsRes?.data || {});
 
-        // Track page view
-        analyticsAPI.trackEvent({ event_type: 'page_view', page: 'home', metadata: {} });
+        // Praćenje posjete
+        if (analyticsAPI?.trackEvent) {
+          analyticsAPI.trackEvent({ event_type: 'page_view', page: 'home', metadata: {} });
+        }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Greška pri učitavanju podataka:', error);
+        toast.error('Problem sa povezivanjem na server');
       } finally {
         setLoading(false);
       }
@@ -59,7 +65,9 @@ const Home = () => {
     
     try {
       const response = await paymentsAPI.createSubscriptionCheckout(programId);
-      window.location.href = response.data.url;
+      if (response?.data?.url) {
+        window.location.href = response.data.url;
+      }
     } catch (error) {
       toast.error('Greška pri pokretanju plaćanja');
     }
@@ -71,32 +79,40 @@ const Home = () => {
     transition: { duration: 0.5 }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background z-10" />
           <img 
-            src="https://images.unsplash.com/photo-1684488624316-774ea1824d97?crop=entropy&cs=srgb&fm=jpg&q=85"
+            src="https://images.unsplash.com/photo-1684488624316-774ea1824d97?auto=format&fit=crop&q=80"
             alt="Background"
             className="w-full h-full object-cover opacity-20"
           />
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-12 py-24 lg:py-32">
+        <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-12 py-24 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div {...fadeUp} className="space-y-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-sm text-primary font-medium">Nova edukacija dostupna</span>
+                <span className="text-sm text-primary font-medium">Continental Academy</span>
               </div>
               
-              <h1 className="heading-1 text-foreground">
+              <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight">
                 {settings.hero_headline || 'Monetizuj svoj sadržaj. Pretvori znanje u prihod.'}
               </h1>
               
-              <p className="body-text max-w-xl">
+              <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
                 {settings.hero_subheadline || 'Nauči kako da zaradiš na TikTok, YouTube i Facebook platformama sa našim ekspertnim vodičima.'}
               </p>
               
@@ -104,8 +120,7 @@ const Home = () => {
                 <Link to={user ? "/dashboard" : "/register"}>
                   <Button 
                     size="lg" 
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 gold-glow"
-                    data-testid="hero-cta-primary"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 shadow-lg shadow-primary/20"
                   >
                     Započni edukaciju
                     <ChevronRight className="w-5 h-5 ml-2" />
@@ -116,7 +131,6 @@ const Home = () => {
                     size="lg" 
                     variant="outline" 
                     className="rounded-full px-8 border-white/10 hover:bg-white/5"
-                    data-testid="hero-cta-secondary"
                   >
                     Pogledaj programe
                   </Button>
@@ -130,16 +144,15 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-video rounded-2xl overflow-hidden luxury-card">
+              <div className="aspect-video rounded-2xl overflow-hidden bg-card border border-white/5 shadow-2xl">
                 {settings.hero_video_url ? (
                   <video 
                     src={settings.hero_video_url} 
                     controls 
                     className="w-full h-full object-cover"
-                    poster="https://images.unsplash.com/photo-1600140094209-bea02144c09c?w=800"
                   />
                 ) : (
-                  <div className="w-full h-full bg-card flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center bg-card">
                     <div className="text-center space-y-4">
                       <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
                         <Play className="w-8 h-8 text-primary" />
@@ -150,16 +163,15 @@ const Home = () => {
                 )}
               </div>
               
-              {/* Floating stat card */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="absolute -bottom-6 -left-6 glass-card rounded-xl p-4"
+                className="absolute -bottom-6 -left-6 bg-background/80 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full gradient-gold flex items-center justify-center">
-                    <Users className="w-6 h-6 text-black" />
+                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                    <Users className="w-6 h-6" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">1,500+</p>
@@ -171,11 +183,10 @@ const Home = () => {
           </div>
         </div>
         
-        {/* Scroll indicator */}
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
         >
           <ChevronDown className="w-6 h-6 text-muted-foreground" />
         </motion.div>
@@ -184,65 +195,49 @@ const Home = () => {
       {/* Programs Section */}
       <section id="programs" className="py-24 lg:py-32 bg-card/30">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="small-caps text-primary">Naši programi</span>
-            <h2 className="heading-2 mt-4">Edukacijski programi</h2>
-            <p className="body-text mt-4 max-w-2xl mx-auto">
-              Izaberite program koji odgovara vašim ciljevima i započnite putovanje ka uspješnoj monetizaciji.
-            </p>
-          </motion.div>
+          <div className="text-center mb-16">
+            <span className="text-primary font-semibold tracking-wider uppercase text-sm">Naši programi</span>
+            <h2 className="text-4xl font-bold mt-4">Edukacijski programi</h2>
+          </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {programs.map((program, index) => (
               <motion.div
-                key={program.id}
+                key={program.id || index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="luxury-card h-full flex flex-col" data-testid={`program-card-${index}`}>
+                <Card className="h-full flex flex-col bg-card border-white/5 hover:border-primary/20 transition-colors">
                   <CardHeader className="pb-4">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                       <BookOpen className="w-6 h-6 text-primary" />
                     </div>
-                    <CardTitle className="font-heading text-xl">{program.name}</CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      {program.description}
-                    </CardDescription>
+                    <CardTitle className="text-xl">{program.name}</CardTitle>
+                    <CardDescription>{program.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
                     <div className="mb-6">
-                      <span className="text-3xl font-bold text-gradient-gold">
-                        €{program.price}
-                      </span>
-                      <span className="text-muted-foreground">/mjesečno</span>
+                      <span className="text-3xl font-bold">€{program.price}</span>
+                      <span className="text-muted-foreground text-sm">/mjesečno</span>
                     </div>
                     
                     <ul className="space-y-3 mb-8 flex-1">
                       {program.features?.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                           <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <span className="text-muted-foreground">{feature}</span>
+                          <span>{feature}</span>
                         </li>
                       ))}
                     </ul>
                     
                     <Button 
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
+                      className="w-full rounded-full"
                       onClick={() => handleSubscribe(program.id)}
-                      data-testid={`subscribe-btn-${index}`}
                     >
                       Pretplati se
                     </Button>
-                    <p className="text-xs text-muted-foreground text-center mt-3">
-                      Otkazivanje putem supporta
-                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -252,108 +247,33 @@ const Home = () => {
       </section>
 
       {/* Results Gallery */}
-      <section className="py-24 lg:py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center"
-          >
-            <span className="small-caps text-primary">Rezultati</span>
-            <h2 className="heading-2 mt-4">Uspjesi naših studenata</h2>
-          </motion.div>
+      <section className="py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center mb-12">
+            <span className="text-primary font-semibold tracking-wider uppercase text-sm">Rezultati</span>
+            <h2 className="text-4xl font-bold mt-4">Uspjesi naših studenata</h2>
         </div>
         
-        <div className="relative">
-          <div className="flex gap-6 auto-scroll">
-            {[...results, ...results].map((result, index) => (
-              <div 
-                key={`${result.id}-${index}`}
-                className="flex-shrink-0 w-80 aspect-[4/5] rounded-2xl overflow-hidden luxury-card group"
-              >
-                <div className="relative w-full h-full">
-                  <img 
-                    src={result.image_url} 
-                    alt={result.caption}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <p className="text-lg font-medium">{result.caption}</p>
-                  </div>
-                </div>
+        <div className="relative flex overflow-x-auto gap-6 px-6 pb-8 no-scrollbar">
+          {(results.length > 0 ? results : []).map((result, index) => (
+            <div key={index} className="flex-shrink-0 w-80 aspect-[4/5] rounded-2xl overflow-hidden relative group">
+              <img src={result.image_url} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-end">
+                <p className="text-white mt-auto">{result.caption}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Continental */}
-      <section className="py-24 lg:py-32 bg-card/30">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="small-caps text-primary">Zašto mi</span>
-            <h2 className="heading-2 mt-4">Zašto Continental Academy?</h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { icon: BookOpen, title: 'Strukturirana edukacija', desc: 'Korak po korak vodič do uspjeha' },
-              { icon: TrendingUp, title: 'Realne metode', desc: 'Provjerene strategije monetizacije' },
-              { icon: MessageCircle, title: '24/7 Discord podrška', desc: 'Uvijek dostupna zajednica' },
-              { icon: Users, title: 'Ažurirane strategije', desc: 'Konstantno nove tehnike' },
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                  <item.icon className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="font-heading text-xl font-semibold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-24 lg:py-32">
-        <div className="max-w-3xl mx-auto px-6 lg:px-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="small-caps text-primary">FAQ</span>
-            <h2 className="heading-2 mt-4">Često postavljana pitanja</h2>
-          </motion.div>
-
-          <Accordion type="single" collapsible className="space-y-4" data-testid="faq-accordion">
-            {faqs.map((faq, index) => (
-              <AccordionItem 
-                key={faq.id} 
-                value={faq.id}
-                className="luxury-card px-6 border-white/5"
-              >
-                <AccordionTrigger className="text-left font-heading hover:no-underline py-6">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-6">
-                  {faq.answer}
-                </AccordionContent>
+      <section id="faq" className="py-24 lg:py-32 bg-card/30">
+        <div className="max-w-3xl mx-auto px-6">
+          <h2 className="text-4xl font-bold text-center mb-12">Često postavljana pitanja</h2>
+          <Accordion type="single" collapsible className="space-y-4">
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id} className="bg-background px-6 rounded-xl border-white/5">
+                <AccordionTrigger>{faq.question}</AccordionTrigger>
+                <AccordionContent>{faq.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
@@ -361,35 +281,18 @@ const Home = () => {
       </section>
 
       {/* Discord CTA */}
-      <section className="py-24 lg:py-32 bg-card/30">
-        <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <div className="w-20 h-20 rounded-2xl bg-[#5865F2]/20 flex items-center justify-center mx-auto mb-8">
-              <MessageCircle className="w-10 h-10 text-[#5865F2]" />
-            </div>
-            <h2 className="heading-2 mb-6">Pridruži se zajednici</h2>
-            <p className="body-text max-w-2xl mx-auto mb-8">
-              Povežite se sa drugim studentima, dijelite iskustva i dobijte podršku kada vam zatreba.
-            </p>
-            <a 
-              href={settings.discord_invite_url || 'https://discord.gg/placeholder'} 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              <Button 
-                size="lg" 
-                className="bg-[#5865F2] hover:bg-[#5865F2]/90 text-white rounded-full px-8"
-                data-testid="discord-cta-btn"
-              >
-                Pridruži se Discord zajednici
-                <ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
-            </a>
-          </motion.div>
+      <section className="py-24 lg:py-32">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-[#5865F2]/20 flex items-center justify-center mx-auto mb-8">
+            <MessageCircle className="w-10 h-10 text-[#5865F2]" />
+          </div>
+          <h2 className="text-4xl font-bold mb-6">Pridruži se zajednici</h2>
+          <p className="text-muted-foreground mb-8 text-lg">Povežite se sa drugim studentima i dobijte podršku Continental Academy tima.</p>
+          <a href={settings.discord_invite_url || '#'} target="_blank" rel="noreferrer">
+            <Button size="lg" className="bg-[#5865F2] hover:bg-[#5865F2]/90 text-white rounded-full px-10">
+              Pridruži se Discordu
+            </Button>
+          </a>
         </div>
       </section>
     </div>
