@@ -18,7 +18,7 @@ const router = express.Router();
 router.get('/users', adminAuth, async (req, res) => {
   try {
     const users = await User.find().sort({ created_at: -1 });
-    res.json(users.map(u => u.toJSON()));
+    res.json(users);
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ detail: 'Server error' });
@@ -45,7 +45,7 @@ router.put('/users/:userId/role', adminAuth, async (req, res) => {
       return res.status(404).json({ detail: 'User not found' });
     }
     
-    res.json(user.toJSON());
+    res.json(user);
   } catch (error) {
     console.error('Update role error:', error);
     res.status(500).json({ detail: 'Server error' });
@@ -165,7 +165,7 @@ router.put('/users/:userId/subscriptions', adminAuth, async (req, res) => {
 router.get('/programs', adminAuth, async (req, res) => {
   try {
     const programs = await Program.find().sort({ created_at: -1 });
-    res.json(programs.map(p => p.toJSON()));
+    res.json(programs);
   } catch (error) {
     console.error('Get programs error:', error);
     res.status(500).json({ detail: 'Server error' });
@@ -177,7 +177,7 @@ router.post('/programs', adminAuth, async (req, res) => {
   try {
     const program = new Program(req.body);
     await program.save();
-    res.status(201).json(program.toJSON());
+    res.status(201).json(program);
   } catch (error) {
     console.error('Create program error:', error);
     res.status(500).json({ detail: 'Server error' });
@@ -192,14 +192,9 @@ router.put('/programs/:id', adminAuth, async (req, res) => {
       req.body,
       { new: true }
     );
-    
-    if (!program) {
-      return res.status(404).json({ detail: 'Program not found' });
-    }
-    
-    res.json(program.toJSON());
+    if (!program) return res.status(404).json({ detail: 'Program not found' });
+    res.json(program);
   } catch (error) {
-    console.error('Update program error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
@@ -208,14 +203,9 @@ router.put('/programs/:id', adminAuth, async (req, res) => {
 router.delete('/programs/:id', adminAuth, async (req, res) => {
   try {
     const program = await Program.findByIdAndDelete(req.params.id);
-    
-    if (!program) {
-      return res.status(404).json({ detail: 'Program not found' });
-    }
-    
+    if (!program) return res.status(404).json({ detail: 'Program not found' });
     res.json({ message: 'Program deleted' });
   } catch (error) {
-    console.error('Delete program error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
@@ -226,8 +216,6 @@ router.delete('/programs/:id', adminAuth, async (req, res) => {
 router.get('/courses', adminAuth, async (req, res) => {
   try {
     const courses = await Course.find().sort({ order: 1, created_at: -1 });
-    
-    // Get lesson counts and program names
     const programs = await Program.find();
     const programMap = {};
     programs.forEach(p => { programMap[p._id.toString()] = p.name; });
@@ -242,7 +230,6 @@ router.get('/courses', adminAuth, async (req, res) => {
     
     res.json(coursesWithInfo);
   } catch (error) {
-    console.error('Get courses error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
@@ -252,9 +239,8 @@ router.post('/courses', adminAuth, async (req, res) => {
   try {
     const course = new Course(req.body);
     await course.save();
-    res.status(201).json(course.toJSON());
+    res.status(201).json(course);
   } catch (error) {
-    console.error('Create course error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
@@ -262,19 +248,10 @@ router.post('/courses', adminAuth, async (req, res) => {
 // Update course
 router.put('/courses/:id', adminAuth, async (req, res) => {
   try {
-    const course = await Course.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    
-    if (!course) {
-      return res.status(404).json({ detail: 'Course not found' });
-    }
-    
-    res.json(course.toJSON());
+    const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!course) return res.status(404).json({ detail: 'Course not found' });
+    res.json(course);
   } catch (error) {
-    console.error('Update course error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
@@ -283,267 +260,183 @@ router.put('/courses/:id', adminAuth, async (req, res) => {
 router.delete('/courses/:id', adminAuth, async (req, res) => {
   try {
     const course = await Course.findByIdAndDelete(req.params.id);
-    
-    if (!course) {
-      return res.status(404).json({ detail: 'Course not found' });
-    }
-    
-    // Also delete all lessons in this course
+    if (!course) return res.status(404).json({ detail: 'Course not found' });
     await Lesson.deleteMany({ course_id: req.params.id });
-    
     res.json({ message: 'Course deleted' });
   } catch (error) {
-    console.error('Delete course error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
 // ============= LESSONS =============
 
-// Create lesson
 router.post('/lessons', adminAuth, async (req, res) => {
   try {
     const lesson = new Lesson(req.body);
     await lesson.save();
-    res.status(201).json(lesson.toJSON());
+    res.status(201).json(lesson);
   } catch (error) {
-    console.error('Create lesson error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Update lesson
 router.put('/lessons/:id', adminAuth, async (req, res) => {
   try {
-    const lesson = await Lesson.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    
-    if (!lesson) {
-      return res.status(404).json({ detail: 'Lesson not found' });
-    }
-    
-    res.json(lesson.toJSON());
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!lesson) return res.status(404).json({ detail: 'Lesson not found' });
+    res.json(lesson);
   } catch (error) {
-    console.error('Update lesson error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Delete lesson
 router.delete('/lessons/:id', adminAuth, async (req, res) => {
   try {
     const lesson = await Lesson.findByIdAndDelete(req.params.id);
-    
-    if (!lesson) {
-      return res.status(404).json({ detail: 'Lesson not found' });
-    }
-    
+    if (!lesson) return res.status(404).json({ detail: 'Lesson not found' });
     res.json({ message: 'Lesson deleted' });
   } catch (error) {
-    console.error('Delete lesson error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Reorder lessons
 router.put('/lessons/reorder', adminAuth, async (req, res) => {
   try {
-    const lessonOrders = req.body; // Array of { id, order }
-    
+    const lessonOrders = req.body;
     for (const item of lessonOrders) {
       await Lesson.findByIdAndUpdate(item.id, { order: item.order });
     }
-    
     res.json({ message: 'Lessons reordered' });
   } catch (error) {
-    console.error('Reorder lessons error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
 // ============= SHOP =============
 
-// Get all products (admin)
 router.get('/shop/products', adminAuth, async (req, res) => {
   try {
     const products = await ShopProduct.find().sort({ created_at: -1 });
-    res.json(products.map(p => p.toJSON()));
+    res.json(products);
   } catch (error) {
-    console.error('Get products error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Create product
 router.post('/shop/products', adminAuth, async (req, res) => {
   try {
     const product = new ShopProduct(req.body);
     await product.save();
-    res.status(201).json(product.toJSON());
+    res.status(201).json(product);
   } catch (error) {
-    console.error('Create product error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Update product
 router.put('/shop/products/:id', adminAuth, async (req, res) => {
   try {
-    const product = await ShopProduct.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    
-    if (!product) {
-      return res.status(404).json({ detail: 'Product not found' });
-    }
-    
-    res.json(product.toJSON());
+    const product = await ShopProduct.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!product) return res.status(404).json({ detail: 'Product not found' });
+    res.json(product);
   } catch (error) {
-    console.error('Update product error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Delete product
 router.delete('/shop/products/:id', adminAuth, async (req, res) => {
   try {
     const product = await ShopProduct.findByIdAndDelete(req.params.id);
-    
-    if (!product) {
-      return res.status(404).json({ detail: 'Product not found' });
-    }
-    
+    if (!product) return res.status(404).json({ detail: 'Product not found' });
     res.json({ message: 'Product deleted' });
   } catch (error) {
-    console.error('Delete product error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
 // ============= FAQs =============
 
-// Create FAQ
 router.post('/faqs', adminAuth, async (req, res) => {
   try {
     const faq = new FAQ(req.body);
     await faq.save();
-    res.status(201).json(faq.toJSON());
+    res.status(201).json(faq);
   } catch (error) {
-    console.error('Create FAQ error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Update FAQ
 router.put('/faqs/:id', adminAuth, async (req, res) => {
   try {
-    const faq = await FAQ.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    
-    if (!faq) {
-      return res.status(404).json({ detail: 'FAQ not found' });
-    }
-    
-    res.json(faq.toJSON());
+    const faq = await FAQ.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!faq) return res.status(404).json({ detail: 'FAQ not found' });
+    res.json(faq);
   } catch (error) {
-    console.error('Update FAQ error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Delete FAQ
 router.delete('/faqs/:id', adminAuth, async (req, res) => {
   try {
     const faq = await FAQ.findByIdAndDelete(req.params.id);
-    
-    if (!faq) {
-      return res.status(404).json({ detail: 'FAQ not found' });
-    }
-    
+    if (!faq) return res.status(404).json({ detail: 'FAQ not found' });
     res.json({ message: 'FAQ deleted' });
   } catch (error) {
-    console.error('Delete FAQ error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
 // ============= RESULTS =============
 
-// Create result
 router.post('/results', adminAuth, async (req, res) => {
   try {
     const result = new Result(req.body);
     await result.save();
-    res.status(201).json(result.toJSON());
+    res.status(201).json(result);
   } catch (error) {
-    console.error('Create result error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
-// Delete result
 router.delete('/results/:id', adminAuth, async (req, res) => {
   try {
     const result = await Result.findByIdAndDelete(req.params.id);
-    
-    if (!result) {
-      return res.status(404).json({ detail: 'Result not found' });
-    }
-    
+    if (!result) return res.status(404).json({ detail: 'Result not found' });
     res.json({ message: 'Result deleted' });
   } catch (error) {
-    console.error('Delete result error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
 // ============= SETTINGS =============
 
-// Update settings
 router.put('/settings', adminAuth, async (req, res) => {
   try {
     let settings = await Settings.findOne({ type: 'site' });
-    
     if (!settings) {
       settings = new Settings({ type: 'site', ...req.body });
     } else {
       Object.assign(settings, req.body);
     }
-    
     await settings.save();
-    res.json(settings.toJSON());
+    res.json(settings);
   } catch (error) {
-    console.error('Update settings error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
 
 // ============= ANALYTICS =============
 
-// Get analytics stats
 router.get('/analytics', adminAuth, async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
     const totalSubscriptions = await User.countDocuments({ 'subscriptions.0': { $exists: true } });
-    const recentEvents = await AnalyticsEvent.find()
-      .sort({ timestamp: -1 })
-      .limit(20);
-    
+    const recentEvents = await AnalyticsEvent.find().sort({ timestamp: -1 }).limit(20);
     res.json({
       total_users: totalUsers,
       total_subscriptions: totalSubscriptions,
-      recent_events: recentEvents.map(e => e.toJSON())
+      recent_events: recentEvents
     });
   } catch (error) {
-    console.error('Get analytics error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
@@ -552,16 +445,13 @@ router.get('/analytics', adminAuth, async (req, res) => {
 
 router.post('/seed', adminAuth, async (req, res) => {
   try {
-    // Create default settings if not exists
     let settings = await Settings.findOne({ type: 'site' });
     if (!settings) {
       settings = new Settings({ type: 'site' });
       await settings.save();
     }
-    
     res.json({ message: 'Seed complete' });
   } catch (error) {
-    console.error('Seed error:', error);
     res.status(500).json({ detail: 'Server error' });
   }
 });
