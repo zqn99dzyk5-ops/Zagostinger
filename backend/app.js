@@ -19,21 +19,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =======================
-   CORS
+   CORS (Sređen da ne blokira frontend)
 ======================= */
-const corsOrigins =
-  process.env.CORS_ORIGINS === '*'
-    ? true
-    : process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:3000'];
-
-app.use(
-  cors({
-    origin: corsOrigins,
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: true, // Dozvoljava svim originima dok si u testnoj fazi
+  credentials: true,
+}));
 
 /* =======================
    BODY PARSERS
@@ -57,20 +48,21 @@ app.get('/api/health', (req, res) => {
 });
 
 /* =======================
-   API ROUTES
+   API ROUTES (Pravilan redoslijed)
 ======================= */
+
+// 1. Prvo rute sa prefiksima
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api', publicRoutes);
 
-/* =======================
-   ANALYTICS (FIX ZA 405)
-======================= */
+// 2. Fix za Analytics (POST mora biti definisan pre opšteg GET *)
 app.post('/api/analytics/event', async (req, res) => {
-  // možeš kasnije logovati u DB
   res.status(204).end();
 });
+
+// 3. Javne rute (poput /api/courses)
+app.use('/api', publicRoutes);
 
 /* =======================
    STATIC REACT BUILD
@@ -78,13 +70,14 @@ app.post('/api/analytics/event', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* =======================
-   REACT ROUTER FALLBACK
+   REACT ROUTER FALLBACK (Mora biti na dnu)
 ======================= */
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api')) {
+  // Ako zahtjev ide na /api a nije nađen iznad, vrati 404
+  if (req.originalUrl.startsWith('/api')) {
     return res.status(404).json({ message: 'API route not found' });
   }
-
+  // Za sve ostalo serviraj frontend
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
