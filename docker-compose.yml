@@ -15,11 +15,10 @@ services:
       - PORT=8001
     restart: unless-stopped
 
-    frontend:
+  frontend:
     build:
       context: ./frontend
       args:
-        # DIREKTNO UPIŠI TVOJU IP ADRESU OVDJE
         - REACT_APP_BACKEND_URL=http://76.13.6.233:8001
     ports:
       - "3000:80"
