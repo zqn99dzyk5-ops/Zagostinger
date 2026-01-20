@@ -38,10 +38,10 @@ const Home = () => {
         ]);
         
         // Sigurnosno postavljanje podataka uz provjeru postojanja niza
-        setPrograms(programsRes?.data || []);
-        setFaqs(faqsRes?.data || []);
-        setResults(resultsRes?.data || []);
-        setSettings(settingsRes?.data || {});
+        setPrograms(Array.isArray(programsRes?.data?.data) ? programsRes.data.data : []);
+        setFaqs(Array.isArray(faqsRes?.data?.data) ? faqsRes.data.data : []);
+        setResults(Array.isArray(resultsRes?.data?.data) ? resultsRes.data.data : []);
+        setSettings(settingsRes?.data?.data || {});
 
         // Praćenje posjete
         if (analyticsAPI?.trackEvent) {
