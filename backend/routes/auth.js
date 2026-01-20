@@ -10,29 +10,34 @@ router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
+    // 1. Provjera ulaznih podataka
     if (!name || !email || !password) {
-      return res.status(400).json({ detail: 'All fields are required' });
+      return res.status(400).json({ detail: 'Sva polja su obavezna (name, email, password)' });
     }
     
-    // Check if user exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    // 2. Provjera da li korisnik već postoji
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
-      return res.status(400).json({ detail: 'Email already registered' });
+      return res.status(400).json({ detail: 'Email je već registrovan' });
     }
     
-    // Create user
+    // 3. Kreiranje korisnika
     const user = new User({
-      name,
-      email: email.toLowerCase(),
-      password
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: password
     });
     
     await user.save();
+    console.log(`✓ Novi korisnik registrovan: ${user.email}`);
     
-    // Generate token
+    // 4. Provjera JWT tajne (da server ne pukne)
+    const secret = process.env.JWT_SECRET || 'privremena_tajna_123';
+    
+    // 5. Generisanje tokena
     const token = jwt.sign(
       { user_id: user._id.toString() },
-      process.env.JWT_SECRET,
+      secret,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
@@ -42,8 +47,8 @@ router.post('/register', async (req, res) => {
       user: user.toJSON()
     });
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ detail: 'Server error' });
+    console.error('Register error detalji:', error);
+    res.status(500).json({ detail: 'Greška na serveru prilikom registracije' });
   }
 });
 
@@ -53,25 +58,23 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     
     if (!email || !password) {
-      return res.status(400).json({ detail: 'Email and password required' });
+      return res.status(400).json({ detail: 'Email i lozinka su obavezni' });
     }
     
-    // Find user
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
-      return res.status(401).json({ detail: 'Invalid credentials' });
+      return res.status(401).json({ detail: 'Pogrešni kredencijali' });
     }
     
-    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ detail: 'Invalid credentials' });
+      return res.status(401).json({ detail: 'Pogrešni kredencijali' });
     }
     
-    // Generate token
+    const secret = process.env.JWT_SECRET || 'privremena_tajna_123';
     const token = jwt.sign(
       { user_id: user._id.toString() },
-      process.env.JWT_SECRET,
+      secret,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
