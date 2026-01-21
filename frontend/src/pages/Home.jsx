@@ -195,59 +195,77 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* Programs Section */}
-      <section id="programs" className="py-24 lg:py-32 bg-card/30">
+        {/* Programs Section */}
+        <section id="programs" className="py-24 lg:py-32 bg-card/30">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="text-center mb-16">
-            <span className="text-primary font-semibold tracking-wider uppercase text-sm">Naši programi</span>
-            <h2 className="text-4xl font-bold mt-4">Edukacijski programi</h2>
+        <div className="text-center mb-16">
+        <span className="text-primary font-semibold tracking-wider uppercase text-sm">Naši programi</span>
+        <h2 className="text-4xl font-bold mt-4">Edukacijski programi</h2>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {programs.map((program, index) => (
-              <motion.div
-                key={program.id || index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {programs.map((program, index) => (
+        <motion.div
+          key={program.id || index}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: index * 0.1 }}
+        >
+          {/* Dodali smo overflow-hidden i group klasu za animaciju slike */}
+          <Card className="h-full flex flex-col bg-card border-white/5 hover:border-primary/20 transition-all overflow-hidden group">
+            
+            {/* NOVI DIO: Thumbnail slike iznad naslova */}
+            <div className="aspect-video w-full overflow-hidden bg-muted relative">
+              {program.thumbnail_url ? (
+                <img 
+                  src={program.thumbnail_url} 
+                  alt={program.name} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              ) : (
+                // Ako nema slike, prikazuje se ikona kao fallback
+                <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                  <BookOpen className="w-10 h-10 text-primary/30" />
+                </div>
+              )}
+            </div>
+
+            <CardHeader className="pb-4">
+              {/* Naslov i opis */}
+              <CardTitle className="text-xl">{program.name}</CardTitle>
+              <CardDescription className="line-clamp-2">{program.description}</CardDescription>
+            </CardHeader>
+            
+            <CardContent className="flex-1 flex flex-col">
+              <div className="mb-6">
+                <span className="text-3xl font-bold">€{program.price}</span>
+                <span className="text-muted-foreground text-sm">/mjesečno</span>
+              </div>
+              
+              <ul className="space-y-3 mb-8 flex-1">
+                {program.features?.map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <Button 
+                className="w-full rounded-full"
+                onClick={() => handleSubscribe(program.id)}
               >
-                <Card className="h-full flex flex-col bg-card border-white/5 hover:border-primary/20 transition-colors">
-                  <CardHeader className="pb-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                      <BookOpen className="w-6 h-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{program.name}</CardTitle>
-                    <CardDescription>{program.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col">
-                    <div className="mb-6">
-                      <span className="text-3xl font-bold">€{program.price}</span>
-                      <span className="text-muted-foreground text-sm">/mjesečno</span>
-                    </div>
-                    
-                    <ul className="space-y-3 mb-8 flex-1">
-                      {program.features?.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    <Button 
-                      className="w-full rounded-full"
-                      onClick={() => handleSubscribe(program.id)}
-                    >
-                      Pretplati se
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+                Pretplati se
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
+
 
       {/* Results Gallery */}
       <section className="py-24 lg:py-32">
