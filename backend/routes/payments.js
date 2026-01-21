@@ -7,7 +7,7 @@ const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// 1. ISPRAVNA GETSTRIPE FUNKCIJA
+// Initialize Stripe
 const getStripe = () => {
   if (!process.env.STRIPE_API_KEY) {
     throw new Error('Stripe API key not configured');
@@ -15,70 +15,38 @@ const getStripe = () => {
   return new Stripe(process.env.STRIPE_API_KEY);
 };
 
-// --- RUTE ---
-
-// ADMIN – Kreiranje programa
-router.post('/programs', auth, async (req, res) => {
-  try {
-    const { name, description, price, currency } = req.body;
-
-    if (!name || !price) {
-      return res.status(400).json({ detail: 'Name and price are required' });
-    }
-
-    const stripe = getStripe();
-
-    // Kreiraj Stripe Product
-    const stripeProduct = await stripe.products.create({
-      name,
-      description
-    });
-
-    // Kreiraj Stripe Price (mjesečna pretplata)
-    const stripePrice = await stripe.prices.create({
-      product: stripeProduct.id,
-      unit_amount: Math.round(price * 100),
-      currency: (currency || 'EUR').toLowerCase(),
-      recurring: { interval: 'month' }
-    });
-
-    // Sačuvaj u tvoju bazu
-    const program = await Program.create({
-      name,
-      description,
-      price,
-      currency,
-      stripe_product_id: stripeProduct.id,
-      stripe_price_id: stripePrice.id
-    });
-
-    res.status(201).json(program);
-  } catch (err) {
-    console.error('Create program error:', err);
-    res.status(500).json({ detail: err.message });
-  }
-});
-
-// Checkout za pretplatu (Subscription)
+// Create subscription checkout
 router.post('/checkout/subscription', auth, async (req, res) => {
   try {
-    const { program_id, origin_url } = req.body;
-
-    if (!program_id || !origin_url) {
-      return res.status(400).json({ detail: 'Missing data' });
-    }
-
+    const { program_id, origin_url } = req.query;
+    
     const program = await Program.findById(program_id);
-    if (!program || !program.stripe_price_id) {
-      return res.status(404).json({ detail: 'Program or Stripe price not found' });
+    if (!program) {
+      return res.status(404).json({ detail: 'Program not found' });
     }
-
+    
     const stripe = getStripe();
-
+    
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [{ price: program.stripe_price_id, quantity: 1 }],
+      mode: 'subscription',
+      line_items: [
+        {
+          price_data: {
+            currency: (program.currency || 'eur').toLowerCase(),
+            product_data: {
+              name: program.name,
+              description: program.description
+            },
+            unit_amount: Math.round(program.price * 100),
+            recurring: {
+              interval: 'month'
+            }
+          },
+          quantity: 1
+        }
+      ],
       metadata: {
         user_id: req.user._id.toString(),
         program_id: program_id,
@@ -87,18 +55,18 @@ router.post('/checkout/subscription', auth, async (req, res) => {
       success_url: `${origin_url}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin_url}/#programs`
     });
-
-    res.json({ checkout_url: session.url });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ detail: err.message });
+    
+    res.json({ checkout_url: session.url, session_id: session.id });
+  } catch (error) {
+    console.error('Subscription checkout error:', error);
+    res.status(500).json({ detail: error.message || 'Payment error' });
   }
 });
 
-// Checkout za običan proizvod (Jednokratno plaćanje)
+// Create product checkout
 router.post('/checkout/product', auth, async (req, res) => {
   try {
-    const { product_id, origin_url } = req.body; // Promijenjeno iz req.query u req.body
+    const { product_id, origin_url } = req.query;
     
     const product = await ShopProduct.findById(product_id);
     if (!product) {
@@ -107,6 +75,7 @@ router.post('/checkout/product', auth, async (req, res) => {
     
     const stripe = getStripe();
     
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -135,25 +104,32 @@ router.post('/checkout/product', auth, async (req, res) => {
     res.json({ checkout_url: session.url, session_id: session.id });
   } catch (error) {
     console.error('Product checkout error:', error);
-    res.status(500).json({ detail: error.message });
+    res.status(500).json({ detail: error.message || 'Payment error' });
   }
 });
 
-// Provjera statusa nakon plaćanja
+// Get payment status
 router.get('/status/:sessionId', auth, async (req, res) => {
   try {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
     
+    // If payment successful, update user
     if (session.payment_status === 'paid') {
       const { user_id, program_id, product_id, type } = session.metadata;
       
       if (type === 'subscription' && program_id) {
-        await User.findByIdAndUpdate(user_id, { $addToSet: { subscriptions: program_id } });
+        await User.findByIdAndUpdate(
+          user_id,
+          { $addToSet: { subscriptions: program_id } }
+        );
       }
       
       if (type === 'product' && product_id) {
-        await ShopProduct.findByIdAndUpdate(product_id, { is_available: false });
+        await ShopProduct.findByIdAndUpdate(
+          product_id,
+          { is_available: false }
+        );
       }
     }
     
@@ -162,40 +138,52 @@ router.get('/status/:sessionId', auth, async (req, res) => {
       customer_email: session.customer_details?.email
     });
   } catch (error) {
-    console.error('Status error:', error);
-    res.status(500).json({ detail: error.message });
+    console.error('Payment status error:', error);
+    res.status(500).json({ detail: error.message || 'Status check error' });
   }
 });
 
-// Stripe Webhook (za sigurnu obradu u pozadini)
+// Stripe webhook
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const stripe = getStripe();
-  const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  
-  let event;
-  
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    console.error('Webhook signature failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-  
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const { user_id, program_id, product_id, type } = session.metadata;
+    const stripe = getStripe();
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
-    if (type === 'subscription' && program_id) {
-      await User.findByIdAndUpdate(user_id, { $addToSet: { subscriptions: program_id } });
+    let event;
+    
+    if (endpointSecret) {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } else {
+      event = JSON.parse(req.body);
     }
     
-    if (type === 'product' && product_id) {
-      await ShopProduct.findByIdAndUpdate(product_id, { is_available: false });
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        const { user_id, program_id, product_id, type } = session.metadata;
+        
+        if (type === 'subscription' && program_id) {
+          await User.findByIdAndUpdate(
+            user_id,
+            { $addToSet: { subscriptions: program_id } }
+          );
+        }
+        
+        if (type === 'product' && product_id) {
+          await ShopProduct.findByIdAndUpdate(
+            product_id,
+            { is_available: false }
+          );
+        }
+        break;
     }
+    
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(400).json({ detail: error.message });
   }
-  
-  res.json({ received: true });
 });
 
 module.exports = router;
