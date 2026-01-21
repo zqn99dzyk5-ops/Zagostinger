@@ -26,7 +26,7 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
+    useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
@@ -37,13 +37,15 @@ const Home = () => {
           settingsAPI.get()
         ]);
         
-        // Sigurnosno postavljanje podataka uz provjeru postojanja niza
-        setPrograms(Array.isArray(programsRes?.data?.data) ? programsRes.data.data : []);
-        setFaqs(Array.isArray(faqsRes?.data?.data) ? faqsRes.data.data : []);
-        setResults(Array.isArray(resultsRes?.data?.data) ? resultsRes.data.data : []);
-        setSettings(settingsRes?.data?.data || {});
+        // POPRAVKA: Uklonjen suvišni .data jer API vraća niz direktno
+        setPrograms(Array.isArray(programsRes?.data) ? programsRes.data : []);
+        setFaqs(Array.isArray(faqsRes?.data) ? faqsRes.data : []);
+        setResults(Array.isArray(resultsRes?.data) ? resultsRes.data : []);
 
-        // Praćenje posjete
+        // Za settings: ako API vraća niz, uzmi prvi objekt, inače uzmi sam objekt
+        const settingsData = settingsRes?.data;
+        setSettings(Array.isArray(settingsData) ? settingsData[0] : (settingsData || {}));
+
         if (analyticsAPI?.trackEvent) {
           analyticsAPI.trackEvent({ event_type: 'page_view', page: 'home', metadata: {} });
         }
@@ -56,6 +58,7 @@ const Home = () => {
     };
     loadData();
   }, []);
+
 
   const handleSubscribe = async (programId) => {
     if (!user) {
