@@ -8,7 +8,9 @@ const programSchema = new mongoose.Schema({
   thumbnail_url: { type: String, default: '' }, // DODANO: Polje za sliku programa
   features: [{ type: String }],
   is_active: { type: Boolean, default: true },
+  stripe_product_id: { type: String },
   stripe_price_id: { type: String },
+
   created_at: { type: Date, default: Date.now }
 });
 
