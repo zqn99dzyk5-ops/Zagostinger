@@ -18,32 +18,25 @@ const getStripe = () => {
 // Create subscription checkout
 router.post('/checkout/subscription', auth, async (req, res) => {
   try {
-    const { program_id, origin_url } = req.query;
-    
-    const program = await Program.findById(program_id);
-    if (!program) {
-      return res.status(404).json({ detail: 'Program not found' });
+    const { program_id, origin_url } = req.body;
+
+    if (!program_id || !origin_url) {
+      return res.status(400).json({ detail: 'Missing data' });
     }
-    
+
+    const program = await Program.findById(program_id);
+    if (!program || !program.stripe_price_id) {
+      return res.status(404).json({ detail: 'Program or Stripe price not found' });
+    }
+
     const stripe = getStripe();
-    
-    // Create checkout session
+
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       mode: 'subscription',
+      payment_method_types: ['card'],
       line_items: [
         {
-          price_data: {
-            currency: (program.currency || 'eur').toLowerCase(),
-            product_data: {
-              name: program.name,
-              description: program.description
-            },
-            unit_amount: Math.round(program.price * 100),
-            recurring: {
-              interval: 'month'
-            }
-          },
+          price: program.stripe_price_id,
           quantity: 1
         }
       ],
@@ -55,11 +48,11 @@ router.post('/checkout/subscription', auth, async (req, res) => {
       success_url: `${origin_url}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin_url}/#programs`
     });
-    
-    res.json({ checkout_url: session.url, session_id: session.id });
-  } catch (error) {
-    console.error('Subscription checkout error:', error);
-    res.status(500).json({ detail: error.message || 'Payment error' });
+
+    res.json({ checkout_url: session.url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ detail: err.message });
   }
 });
 
