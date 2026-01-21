@@ -9,6 +9,46 @@ const router = express.Router();
 
 // Initialize Stripe
 const getStripe = () => {
+  // ADMIN – Create program + Stripe Product & Price
+  router.post('/programs', auth, async (req, res) => {
+  try {
+    const { name, description, price, currency } = req.body;
+
+    if (!name || !price) {
+      return res.status(400).json({ detail: 'Name and price are required' });
+    }
+
+    const stripe = getStripe();
+
+    // 1️⃣ Kreiraj Stripe Product
+    const stripeProduct = await stripe.products.create({
+      name,
+      description
+    });
+
+    // 2️⃣ Kreiraj Stripe Price (subscription)
+    const stripePrice = await stripe.prices.create({
+      product: stripeProduct.id,
+      unit_amount: Math.round(price * 100),
+      currency: (currency || 'EUR').toLowerCase(),
+      recurring: { interval: 'month' }
+    });
+
+    // 3️⃣ Sačuvaj program u bazi
+    const program = await Program.create({
+      name,
+      description,
+      price,
+      currency,
+      stripe_product_id: stripeProduct.id,
+      stripe_price_id: stripePrice.id
+    });
+
+    res.status(201).json(program);
+  } catch (err) {
+    console.error('Create program error:', err);
+    res.status(500).json({ detail: err.message });
+  }
   if (!process.env.STRIPE_API_KEY) {
     throw new Error('Stripe API key not configured');
   }
