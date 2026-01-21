@@ -4,7 +4,8 @@ import {
   Users, BookOpen, ShoppingBag, Settings, BarChart3, 
   Plus, Trash2, Edit, Save, Loader2, MessageCircle, 
   FileText, Image, Video, DollarSign, Palette, GraduationCap,
-  PlayCircle, Clock, ChevronDown, ChevronUp, Eye, EyeOff, X
+  PlayCircle, Clock, ChevronDown, ChevronUp, Eye, EyeOff, X,
+  Link as LinkIcon, Mail, Phone, Globe
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -104,203 +105,25 @@ const Admin = () => {
     }
   };
 
-  const updateSettings = async (newSettings) => {
+  // --- SETTINGS LOGIC ---
+  const handleUpdateSettings = async () => {
     try {
-      const response = await settingsAPI.update(newSettings);
-      if (response.data) {
-        setSettings(response.data);
-      } else {
-        setSettings({ ...settings, ...newSettings });
-      }
+      await settingsAPI.update(settings);
       toast.success('Postavke ažurirane');
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       toast.error('Greška pri ažuriranju postavki');
     }
   };
 
+  // --- USER LOGIC ---
   const updateUserRole = async (userId, role) => {
     try {
       await adminAPI.updateUserRole(userId, role);
       setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
-      toast.success('Uloga korisnika ažurirana');
+      toast.success('Uloga ažurirana');
     } catch (error) {
-      toast.error('Greška pri ažuriranju uloge');
-    }
-  };
-
-  const loadCourseLessons = async (courseId) => {
-    try {
-      const response = await lessonsAPI.getAll(courseId);
-      setCourseLessons(prev => ({ ...prev, [courseId]: response.data }));
-    } catch (error) {
-      console.error('Error loading lessons:', error);
-    }
-  };
-
-  const saveProgram = async (programData) => {
-    try {
-      if (editingItem?.id) {
-        await programsAPI.update(editingItem.id, programData);
-        toast.success('Program ažuriran');
-      } else {
-        await programsAPI.create(programData);
-        toast.success('Program kreiran');
-      }
-      loadAllData();
-      setShowProgramModal(false);
-      setEditingItem(null);
-    } catch (error) {
-      toast.error('Greška pri spremanju programa');
-    }
-  };
-
-  const deleteProgram = async (id) => {
-    if (!confirm('Da li ste sigurni?')) return;
-    try {
-      await programsAPI.delete(id);
-      setPrograms(programs.filter(p => p.id !== id));
-      toast.success('Program obrisan');
-    } catch (error) {
-      toast.error('Greška pri brisanju');
-    }
-  };
-
-  const saveCourse = async (courseData) => {
-    try {
-      if (editingItem?.id) {
-        await coursesAPI.update(editingItem.id, courseData);
-        toast.success('Kurs ažuriran');
-      } else {
-        await coursesAPI.create(courseData);
-        toast.success('Kurs kreiran');
-      }
-      loadAllData();
-      setShowCourseModal(false);
-      setEditingItem(null);
-    } catch (error) {
-      toast.error('Greška pri spremanju kursa');
-    }
-  };
-
-  const deleteCourse = async (id) => {
-    if (!confirm('Da li ste sigurni? Sve lekcije će biti obrisane.')) return;
-    try {
-      await coursesAPI.delete(id);
-      setCourses(courses.filter(c => c.id !== id));
-      toast.success('Kurs obrisan');
-    } catch (error) {
-      toast.error('Greška pri brisanju');
-    }
-  };
-
-  const saveLesson = async (lessonData) => {
-    try {
-      if (editingItem?.id) {
-        await lessonsAPI.update(editingItem.id, lessonData);
-        toast.success('Lekcija ažurirana');
-      } else {
-        await lessonsAPI.create(lessonData);
-        toast.success('Lekcija kreirana');
-      }
-      if (selectedCourse) {
-        loadCourseLessons(selectedCourse.id);
-      }
-      setShowLessonModal(false);
-      setEditingItem(null);
-    } catch (error) {
-      toast.error('Greška pri spremanju lekcije');
-    }
-  };
-
-  const deleteLesson = async (lessonId, courseId) => {
-    if (!confirm('Da li ste sigurni?')) return;
-    try {
-      await lessonsAPI.delete(lessonId);
-      setCourseLessons(prev => ({
-        ...prev,
-        [courseId]: prev[courseId]?.filter(l => l.id !== lessonId)
-      }));
-      toast.success('Lekcija obrisana');
-    } catch (error) {
-      toast.error('Greška pri brisanju');
-    }
-  };
-
-  const saveProduct = async (productData) => {
-    try {
-      if (editingItem?.id) {
-        await shopAPI.updateProduct(editingItem.id, productData);
-        toast.success('Proizvod ažuriran');
-      } else {
-        await shopAPI.createProduct(productData);
-        toast.success('Proizvod kreiran');
-      }
-      loadAllData();
-      setShowProductModal(false);
-      setEditingItem(null);
-    } catch (error) {
-      toast.error('Greška pri spremanju proizvoda');
-    }
-  };
-
-  const deleteProduct = async (id) => {
-    if (!confirm('Da li ste sigurni?')) return;
-    try {
-      await shopAPI.deleteProduct(id);
-      setProducts(products.filter(p => p.id !== id));
-      toast.success('Proizvod obrisan');
-    } catch (error) {
-      toast.error('Greška pri brisanju');
-    }
-  };
-
-  const saveFaq = async (faqData) => {
-    try {
-      if (editingItem?.id) {
-        await faqsAPI.update(editingItem.id, faqData);
-        toast.success('FAQ ažuriran');
-      } else {
-        await faqsAPI.create(faqData);
-        toast.success('FAQ kreiran');
-      }
-      loadAllData();
-      setShowFaqModal(false);
-      setEditingItem(null);
-    } catch (error) {
-      toast.error('Greška pri spremanju FAQ-a');
-    }
-  };
-
-  const deleteFaq = async (id) => {
-    if (!confirm('Da li ste sigurni?')) return;
-    try {
-      await faqsAPI.delete(id);
-      setFaqs(faqs.filter(f => f.id !== id));
-      toast.success('FAQ obrisan');
-    } catch (error) {
-      toast.error('Greška pri brisanju');
-    }
-  };
-
-  const saveResult = async (resultData) => {
-    try {
-      await resultsAPI.create(resultData);
-      toast.success('Rezultat dodan');
-      loadAllData();
-      setShowResultModal(false);
-    } catch (error) {
-      toast.error('Greška pri dodavanju');
-    }
-  };
-
-  const deleteResult = async (id) => {
-    if (!confirm('Da li ste sigurni?')) return;
-    try {
-      await resultsAPI.delete(id);
-      setResults(results.filter(r => r.id !== id));
-      toast.success('Rezultat obrisan');
-    } catch (error) {
-      toast.error('Greška pri brisanju');
+      toast.error('Greška');
     }
   };
 
@@ -319,157 +142,143 @@ const Admin = () => {
       }
       setUsers(users.map(u => {
         if (u.id === selectedUser.id) {
-          const courses = u.courses || [];
+          const uCourses = u.courses || [];
           return {
             ...u,
-            courses: hasAccess 
-              ? courses.filter(c => c !== courseId)
-              : [...courses, courseId]
+            courses: hasAccess ? uCourses.filter(c => c !== courseId) : [...uCourses, courseId]
           };
         }
         return u;
       }));
       setSelectedUser(prev => ({
         ...prev,
-        courses: hasAccess
-          ? (prev.courses || []).filter(c => c !== courseId)
-          : [...(prev.courses || []), courseId]
+        courses: hasAccess ? (prev.courses || []).filter(c => c !== courseId) : [...(prev.courses || []), courseId]
       }));
-      toast.success(hasAccess ? 'Kurs uklonjen' : 'Kurs dodan');
-    } catch (error) {
-      toast.error('Greška pri ažuriranju');
-    }
+      toast.success('Ažurirano');
+    } catch (e) { toast.error('Greška'); }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // --- PROGRAMS & COURSES LOGIC ---
+  const loadCourseLessons = async (courseId) => {
+    try {
+      const response = await lessonsAPI.getAll(courseId);
+      setCourseLessons(prev => ({ ...prev, [courseId]: response.data }));
+    } catch (e) { console.error(e); }
+  };
+
+  const saveProgram = async (data) => {
+    try {
+      editingItem?.id ? await programsAPI.update(editingItem.id, data) : await programsAPI.create(data);
+      loadAllData(); setShowProgramModal(false); toast.success('Spremljeno');
+    } catch (e) { toast.error('Greška'); }
+  };
+
+  const deleteProgram = async (id) => {
+    if (!confirm('Obrisati program?')) return;
+    try { await programsAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
+  };
+
+  const saveCourse = async (data) => {
+    try {
+      editingItem?.id ? await coursesAPI.update(editingItem.id, data) : await coursesAPI.create(data);
+      loadAllData(); setShowCourseModal(false); toast.success('Kurs spremljen');
+    } catch (e) { toast.error('Greška'); }
+  };
+
+  const deleteCourse = async (id) => {
+    if (!confirm('Obrisati kurs?')) return;
+    try { await coursesAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
+  };
+
+  const saveLesson = async (data) => {
+    try {
+      editingItem?.id ? await lessonsAPI.update(editingItem.id, data) : await lessonsAPI.create(data);
+      if (selectedCourse) loadCourseLessons(selectedCourse.id);
+      setShowLessonModal(false); toast.success('Lekcija spremljena');
+    } catch (e) { toast.error('Greška'); }
+  };
+
+  const deleteLesson = async (lId, cId) => {
+    if (!confirm('Obrisati lekciju?')) return;
+    try { await lessonsAPI.delete(lId); loadCourseLessons(cId); } catch (e) { toast.error('Greška'); }
+  };
+
+  // --- SHOP & CONTENT LOGIC ---
+  const saveProduct = async (data) => {
+    try {
+      editingItem?.id ? await shopAPI.updateProduct(editingItem.id, data) : await shopAPI.createProduct(data);
+      loadAllData(); setShowProductModal(false); toast.success('Proizvod spremljen');
+    } catch (e) { toast.error('Greška'); }
+  };
+
+  const saveFaq = async (data) => {
+    try {
+      editingItem?.id ? await faqsAPI.update(editingItem.id, data) : await faqsAPI.create(data);
+      loadAllData(); setShowFaqModal(false); toast.success('FAQ spremljen');
+    } catch (e) { toast.error('Greška'); }
+  };
+
+  const deleteFaq = async (id) => {
+    try { await faqsAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
+  };
+
+  const saveResult = async (data) => {
+    try { await resultsAPI.create(data); loadAllData(); setShowResultModal(false); toast.success('Rezultat dodan'); } catch (e) { toast.error('Greška'); }
+  };
+
+  const deleteResult = async (id) => {
+    try { await resultsAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    <div className="min-h-screen pt-24 pb-16 bg-background">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="heading-2 mb-2">Admin Panel</h1>
-          <p className="text-muted-foreground">Upravljajte svim aspektima platforme</p>
+          <p className="text-muted-foreground">Upravljajte platformom i postavkama</p>
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="bg-card border border-white/5 p-1 rounded-xl flex-wrap h-auto">
-            <TabsTrigger value="overview" className="gap-2 rounded-lg"><BarChart3 className="w-4 h-4" /> Pregled</TabsTrigger>
-            <TabsTrigger value="users" className="gap-2 rounded-lg"><Users className="w-4 h-4" /> Korisnici</TabsTrigger>
-            <TabsTrigger value="courses" className="gap-2 rounded-lg"><GraduationCap className="w-4 h-4" /> Kursevi</TabsTrigger>
-            <TabsTrigger value="programs" className="gap-2 rounded-lg"><BookOpen className="w-4 h-4" /> Programi</TabsTrigger>
-            <TabsTrigger value="shop" className="gap-2 rounded-lg"><ShoppingBag className="w-4 h-4" /> Shop</TabsTrigger>
-            <TabsTrigger value="content" className="gap-2 rounded-lg"><FileText className="w-4 h-4" /> Sadržaj</TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2 rounded-lg"><Settings className="w-4 h-4" /> Postavke</TabsTrigger>
+            <TabsTrigger value="overview" className="gap-2"><BarChart3 className="w-4 h-4" /> Pregled</TabsTrigger>
+            <TabsTrigger value="users" className="gap-2"><Users className="w-4 h-4" /> Korisnici</TabsTrigger>
+            <TabsTrigger value="courses" className="gap-2"><GraduationCap className="w-4 h-4" /> Kursevi</TabsTrigger>
+            <TabsTrigger value="programs" className="gap-2"><BookOpen className="w-4 h-4" /> Programi</TabsTrigger>
+            <TabsTrigger value="shop" className="gap-2"><ShoppingBag className="w-4 h-4" /> Shop</TabsTrigger>
+            <TabsTrigger value="content" className="gap-2"><FileText className="w-4 h-4" /> Sadržaj</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" /> Postavke</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview">
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <Card className="luxury-card">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Users className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{analytics?.total_users || 0}</p>
-                      <p className="text-sm text-muted-foreground">Ukupno korisnika</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="luxury-card">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-green-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{analytics?.total_subscriptions || 0}</p>
-                      <p className="text-sm text-muted-foreground">Aktivne pretplate</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="luxury-card">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                      <GraduationCap className="w-6 h-6 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{courses.length}</p>
-                      <p className="text-sm text-muted-foreground">Kurseva</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="luxury-card">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-purple-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{programs.length}</p>
-                      <p className="text-sm text-muted-foreground">Programa</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid md:grid-cols-4 gap-6">
+              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="text-primary" /></div><div><p className="text-2xl font-bold">{analytics?.total_users || 0}</p><p className="text-sm text-muted-foreground">Korisnika</p></div></div></CardContent></Card>
+              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center"><DollarSign className="text-green-500" /></div><div><p className="text-2xl font-bold">{analytics?.total_subscriptions || 0}</p><p className="text-sm text-muted-foreground">Pretplata</p></div></div></CardContent></Card>
+              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><GraduationCap className="text-blue-500" /></div><div><p className="text-2xl font-bold">{courses.length}</p><p className="text-sm text-muted-foreground">Kurseva</p></div></div></CardContent></Card>
+              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center"><BookOpen className="text-purple-500" /></div><div><p className="text-2xl font-bold">{programs.length}</p><p className="text-sm text-muted-foreground">Programa</p></div></div></CardContent></Card>
             </div>
-
-            <Card className="luxury-card">
-              <CardHeader><CardTitle>Nedavni eventi</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {analytics?.recent_events?.slice(0, 10).map((event, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                      <div><p className="text-sm font-medium">{event.event_type}</p><p className="text-xs text-muted-foreground">{event.page}</p></div>
-                      <span className="text-xs text-muted-foreground">{new Date(event.timestamp).toLocaleString('bs')}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users">
             <Card className="luxury-card">
-              <CardHeader><CardTitle>Korisnici</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Upravljanje korisnicima</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ime</TableHead><TableHead>Email</TableHead><TableHead>Uloga</TableHead><TableHead>Pretplate</TableHead><TableHead>Kursevi</TableHead><TableHead>Datum</TableHead><TableHead>Akcije</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <TableHeader><TableRow><TableHead>Ime</TableHead><TableHead>Email</TableHead><TableHead>Uloga</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {users.map((user) => (
                       <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.name}</TableCell><TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Select value={user.role} onValueChange={(value) => updateUserRole(user.id, value)}>
+                          <Select value={user.role} onValueChange={(v) => updateUserRole(user.id, v)}>
                             <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>{user.subscriptions?.length || 0}</TableCell>
-                        <TableCell><Badge variant="outline">{user.courses?.length || 0} kurseva</Badge></TableCell>
-                        <TableCell className="text-muted-foreground">{new Date(user.created_at).toLocaleDateString('bs')}</TableCell>
-                        <TableCell><Button variant="outline" size="sm" onClick={() => openUserCoursesModal(user)}><GraduationCap className="w-4 h-4 mr-1" />Kursevi</Button></TableCell>
+                        <TableCell><Button variant="outline" size="sm" onClick={() => openUserCoursesModal(user)}>Kursevi</Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -478,49 +287,38 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Courses Tab */}
+          {/* Courses & Lessons Tab */}
           <TabsContent value="courses">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
-                <div><CardTitle>Kursevi i Lekcije</CardTitle></div>
-                <Button onClick={() => { setEditingItem(null); setShowCourseModal(true); }}><Plus className="w-4 h-4" /> Novi kurs</Button>
+                <CardTitle>Kursevi i Lekcije</CardTitle>
+                <Button onClick={() => { setEditingItem(null); setShowCourseModal(true); }}><Plus className="w-4 h-4" /> Novi Kurs</Button>
               </CardHeader>
               <CardContent>
                 <Accordion type="multiple" className="space-y-4">
                   {courses.map((course) => (
-                    <AccordionItem key={course.id} value={course.id} className="luxury-card border-white/10 px-0 overflow-hidden">
-                      <AccordionTrigger className="px-6 py-4 hover:no-underline" onClick={() => !courseLessons[course.id] && loadCourseLessons(course.id)}>
-                        <div className="flex items-center justify-between w-full pr-4 text-left">
-                          <div className="flex items-center gap-4">
-                             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><GraduationCap className="w-6 h-6 text-primary" /></div>
-                             <div>
-                               <p className="font-semibold">{course.title}</p>
-                               <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                                 <span>{course.lesson_count || 0} lekcija</span>
-                                 <Badge variant="outline">{course.program_name}</Badge>
-                               </div>
-                             </div>
-                          </div>
+                    <AccordionItem key={course.id} value={course.id} className="border-white/10">
+                      <AccordionTrigger className="hover:no-underline px-4" onClick={() => !courseLessons[course.id] && loadCourseLessons(course.id)}>
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <span>{course.title} <Badge variant="outline" className="ml-2">{course.program_name}</Badge></span>
                           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="sm" onClick={() => { setEditingItem(course); setShowCourseModal(true); }}><Edit className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="sm" onClick={() => deleteCourse(course.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                           </div>
                         </div>
                       </AccordionTrigger>
-                      <AccordionContent className="px-6 pb-6">
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center"><h4 className="font-medium text-sm text-muted-foreground uppercase">Lekcije</h4><Button size="sm" onClick={() => { setSelectedCourse(course); setEditingItem(null); setShowLessonModal(true); }}><Plus className="w-4 h-4" /> Dodaj lekciju</Button></div>
-                          <div className="space-y-2">
-                            {courseLessons[course.id]?.map((lesson) => (
-                              <div key={lesson.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5">
-                                <p>{lesson.title}</p>
-                                <div className="flex gap-2">
-                                  <Button variant="ghost" size="sm" onClick={() => { setSelectedCourse(course); setEditingItem(lesson); setShowLessonModal(true); }}><Edit className="w-4 h-4" /></Button>
-                                  <Button variant="ghost" size="sm" onClick={() => deleteLesson(lesson.id, course.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                                </div>
+                      <AccordionContent className="px-4 pb-4">
+                        <Button size="sm" className="mb-4" onClick={() => { setSelectedCourse(course); setEditingItem(null); setShowLessonModal(true); }}><Plus className="w-4 h-4" /> Dodaj Lekciju</Button>
+                        <div className="space-y-2">
+                          {courseLessons[course.id]?.map((lesson) => (
+                            <div key={lesson.id} className="flex justify-between p-3 bg-white/5 rounded-lg">
+                              <span>{lesson.title}</span>
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => { setSelectedCourse(course); setEditingItem(lesson); setShowLessonModal(true); }}><Edit className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="sm" onClick={() => deleteLesson(lesson.id, course.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -534,22 +332,22 @@ const Admin = () => {
           <TabsContent value="programs">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
-                <div><CardTitle>Programi</CardTitle></div>
-                <Button onClick={() => { setEditingItem(null); setShowProgramModal(true); }}><Plus className="w-4 h-4" /> Novi program</Button>
+                <CardTitle>Programi</CardTitle>
+                <Button onClick={() => { setEditingItem(null); setShowProgramModal(true); }}><Plus className="w-4 h-4" /> Novi Program</Button>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader><TableRow><TableHead>Naziv</TableHead><TableHead>Cijena</TableHead><TableHead>Status</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {programs.map((program) => (
-                      <TableRow key={program.id}>
-                        <TableCell className="font-medium">{program.name}</TableCell>
-                        <TableCell>€{program.price}</TableCell>
-                        <TableCell><Badge className={program.is_active ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}>{program.is_active ? 'Aktivan' : 'Neaktivan'}</Badge></TableCell>
+                    {programs.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium">{p.name}</TableCell>
+                        <TableCell>€{p.price}</TableCell>
+                        <TableCell><Badge variant={p.is_active ? "default" : "destructive"}>{p.is_active ? "Aktivan" : "Neaktivan"}</Badge></TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(program); setShowProgramModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => deleteProgram(program.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(p); setShowProgramModal(true); }}><Edit className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => deleteProgram(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -564,20 +362,20 @@ const Admin = () => {
           <TabsContent value="shop">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
-                <div><CardTitle>Shop proizvodi</CardTitle></div>
-                <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }}><Plus className="w-4 h-4" /> Novi proizvod</Button>
+                <CardTitle>Shop Proizvodi</CardTitle>
+                <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }}><Plus className="w-4 h-4" /> Novi Proizvod</Button>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader><TableRow><TableHead>Naziv</TableHead><TableHead>Cijena</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell>{product.title}</TableCell><TableCell>€{product.price}</TableCell>
+                    {products.map((prod) => (
+                      <TableRow key={prod.id}>
+                        <TableCell>{prod.title}</TableCell><TableCell>€{prod.price}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(product); setShowProductModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => deleteProduct(product.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}><Edit className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -588,62 +386,76 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Content Tab */}
+          {/* Content (FAQ & Results) */}
           <TabsContent value="content" className="space-y-6">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
-                <div><CardTitle>FAQ</CardTitle></div>
-                <Button onClick={() => { setEditingItem(null); setShowFaqModal(true); }}><Plus className="w-4 h-4" /> Novo pitanje</Button>
+                <CardTitle>FAQ</CardTitle>
+                <Button onClick={() => { setEditingItem(null); setShowFaqModal(true); }}><Plus className="w-4 h-4" /> Novo Pitanje</Button>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {faqs.map((faq) => (
-                    <div key={faq.id} className="flex justify-between p-4 bg-white/5 rounded-lg">
-                      <div><p className="font-medium">{faq.question}</p></div>
-                      <div className="flex gap-2">
-                         <Button variant="ghost" size="sm" onClick={() => { setEditingItem(faq); setShowFaqModal(true); }}><Edit className="w-4 h-4" /></Button>
-                         <Button variant="ghost" size="sm" onClick={() => deleteFaq(faq.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                      </div>
+              <CardContent className="space-y-4">
+                {faqs.map((f) => (
+                  <div key={f.id} className="flex justify-between p-4 bg-white/5 rounded-lg border border-white/5">
+                    <div><p className="font-medium">{f.question}</p></div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingItem(f); setShowFaqModal(true); }}><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => deleteFaq(f.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
-            
             <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div><CardTitle>Rezultati</CardTitle></div>
-                <Button onClick={() => setShowResultModal(true)}><Plus className="w-4 h-4" /> Dodaj rezultat</Button>
-              </CardHeader>
-              <CardContent>
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                   {results.map((result) => (
-                     <div key={result.id} className="relative group aspect-square">
-                       <img src={result.image_url} className="w-full h-full object-cover rounded-lg" alt="" />
-                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                         <Button variant="ghost" size="sm" onClick={() => deleteResult(result.id)}><Trash2 className="w-5 h-5 text-destructive" /></Button>
-                       </div>
-                     </div>
-                   ))}
-                 </div>
-              </CardContent>
+              <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Rezultati</CardTitle><Button onClick={() => setShowResultModal(true)}><Plus className="w-4 h-4" /> Dodaj</Button></CardHeader>
+              <CardContent><div className="grid grid-cols-4 gap-4">
+                {results.map((r) => (
+                  <div key={r.id} className="relative group"><img src={r.image_url} className="w-full aspect-square object-cover rounded-lg" /><Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => deleteResult(r.id)}><Trash2 className="w-4 h-4" /></Button></div>
+                ))}
+              </div></CardContent>
             </Card>
           </TabsContent>
 
-          {/* Settings Tab */}
+          {/* Settings Tab - SA SVIM POLJIMA */}
           <TabsContent value="settings" className="space-y-6">
-            <Card className="luxury-card">
-              <CardHeader><CardTitle>Generalne postavke</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2"><Label>Hero naslov</Label><Input value={settings.hero_headline || ''} onChange={(e) => setSettings({...settings, hero_headline: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Hero podnaslov</Label><Textarea value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
-                <Button onClick={() => updateSettings(settings)}>Spremi sve postavke</Button>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="luxury-card">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Palette className="w-5 h-5" /> Branding</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div><Label>Naziv Sajta</Label><Input value={settings.site_name || ''} onChange={(e) => setSettings({...settings, site_name: e.target.value})} /></div>
+                  <div><Label>Logo URL</Label><Input value={settings.logo_url || ''} onChange={(e) => setSettings({...settings, logo_url: e.target.value})} /></div>
+                  <div><Label>Favicon URL</Label><Input value={settings.favicon_url || ''} onChange={(e) => setSettings({...settings, favicon_url: e.target.value})} /></div>
+                  <div><Label>Tema</Label><Select value={settings.theme} onValueChange={(v) => setSettings({...settings, theme: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="dark-luxury">Dark Luxury</SelectItem><SelectItem value="gold">Gold</SelectItem></SelectContent></Select></div>
+                </CardContent>
+              </Card>
+              <Card className="luxury-card">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Hero & Media</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div><Label>Hero Video URL</Label><Input value={settings.hero_video_url || ''} onChange={(e) => setSettings({...settings, hero_video_url: e.target.value})} /></div>
+                  <div><Label>Headline</Label><Input value={settings.hero_headline || ''} onChange={(e) => setSettings({...settings, hero_headline: e.target.value})} /></div>
+                  <div><Label>Subheadline</Label><Textarea value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
+                </CardContent>
+              </Card>
+              <Card className="luxury-card">
+                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Social & Contact</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div><Label>Discord Link</Label><Input value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} /></div>
+                  <div><Label>Contact Email</Label><Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} /></div>
+                  <div><Label>Footer Text</Label><Input value={settings.footer_text || ''} onChange={(e) => setSettings({...settings, footer_text: e.target.value})} /></div>
+                </CardContent>
+              </Card>
+              <Card className="luxury-card">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5" /> Vidljivost</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between"><Label>Prikaži Rezultate</Label><Switch checked={settings.show_results_section} onCheckedChange={(v) => setSettings({...settings, show_results_section: v})} /></div>
+                  <div className="flex items-center justify-between"><Label>Prikaži FAQ</Label><Switch checked={settings.show_faq_section} onCheckedChange={(v) => setSettings({...settings, show_faq_section: v})} /></div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="flex justify-end pt-4"><Button size="lg" onClick={handleUpdateSettings}><Save className="mr-2 w-5 h-5" /> Spremi Sve Postavke</Button></div>
           </TabsContent>
         </Tabs>
 
-        {/* Modals */}
+        {/* MODALS */}
         <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
           <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Program</DialogTitle></DialogHeader>
             <ProgramForm initialData={editingItem} onSave={saveProgram} onCancel={() => setShowProgramModal(false)} />
@@ -675,21 +487,20 @@ const Admin = () => {
         </Dialog>
 
         <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Dodaj rezultat</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Dodaj Rezultat</DialogTitle></DialogHeader>
             <ResultForm onSave={saveResult} onCancel={() => setShowResultModal(false)} />
           </DialogContent>
         </Dialog>
-        
+
         <Dialog open={showUserCoursesModal} onOpenChange={setShowUserCoursesModal}>
           <DialogContent className="bg-card border-white/10 max-w-lg">
-            <DialogHeader><DialogTitle>Upravljanje kursevima</DialogTitle><DialogDescription>{selectedUser?.name}</DialogDescription></DialogHeader>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {courses.map((course) => {
-                const hasAccess = selectedUser?.courses?.includes(course.id);
+            <DialogHeader><DialogTitle>Kursevi korisnika</DialogTitle><DialogDescription>{selectedUser?.name}</DialogDescription></DialogHeader>
+            <div className="space-y-2 max-h-96 overflow-y-auto mt-4">
+              {courses.map((c) => {
+                const access = selectedUser?.courses?.includes(c.id);
                 return (
-                  <div key={course.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5">
-                    <p>{course.title}</p>
-                    <Switch checked={hasAccess} onCheckedChange={() => toggleUserCourse(course.id, hasAccess)} />
+                  <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                    <span>{c.title}</span><Switch checked={access} onCheckedChange={() => toggleUserCourse(c.id, access)} />
                   </div>
                 );
               })}
@@ -701,60 +512,52 @@ const Admin = () => {
   );
 };
 
-// --- Form Components ---
-
+// --- FORM COMPONENTS ---
 const ProgramForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
     price: initialData?.price || 0,
     currency: initialData?.currency || 'EUR',
-    thumbnail_url: initialData?.thumbnail_url || '', // OVO JE DODANO
+    thumbnail_url: initialData?.thumbnail_url || '',
     features: initialData?.features?.join('\n') || '',
     is_active: initialData?.is_active !== false
   });
-
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: parseFloat(formData.price), features: formData.features.split('\n').filter(f => f.trim())}); }} className="space-y-4">
       <div><Label>Naziv</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
       <div><Label>Opis</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required /></div>
-      <div><Label>Thumbnail URL (Slika)</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} placeholder="https://..." /></div>
+      <div><Label>Thumbnail URL (Slika)</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} /></div>
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Cijena</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
-        <div><Label>Valuta</Label><Select value={formData.currency} onValueChange={(v) => setFormData({...formData, currency: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="BAM">BAM</SelectItem></SelectContent></Select></div>
+        <div><Label>Valuta</Label><Input value={formData.currency} disabled /></div>
       </div>
-      <div><Label>Značajke (po jedna u redu)</Label><Textarea value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} /></div>
+      <div><Label>Značajke (svaka u novi red)</Label><Textarea value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} /></div>
       <div className="flex items-center gap-2"><Switch checked={formData.is_active} onCheckedChange={(v) => setFormData({...formData, is_active: v})} /><Label>Aktivan</Label></div>
-      <div className="flex gap-3"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
     </form>
   );
 };
 
 const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    title: initialData?.title || '',
-    description: initialData?.description || '',
-    program_id: initialData?.program_id || '',
-    thumbnail_url: initialData?.thumbnail_url || '',
-    order: initialData?.order || 0
-  });
+  const [formData, setFormData] = useState({ title: initialData?.title || '', program_id: initialData?.program_id || '', thumbnail_url: initialData?.thumbnail_url || '' });
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naslov</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
+      <div><Label>Naziv Kursa</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
       <div><Label>Program</Label><Select value={formData.program_id} onValueChange={(v) => setFormData({...formData, program_id: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
       <div><Label>Thumbnail URL</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} /></div>
-      <div className="flex gap-3"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
     </form>
   );
 };
 
 const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ title: initialData?.title || '', video_url: initialData?.video_url || '', course_id: courseId, order: initialData?.order || 0 });
+  const [formData, setFormData] = useState({ title: initialData?.title || '', video_url: initialData?.video_url || '', course_id: courseId });
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naslov</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-      <div><Label>Video URL</Label><Input value={formData.video_url} onChange={(e) => setFormData({...formData, video_url: e.target.value})} /></div>
-      <div className="flex gap-3"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div><Label>Naslov Lekcije</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
+      <div><Label>Video URL</Label><Input value={formData.video_url} onChange={(e) => setFormData({...formData, video_url: e.target.value})} required /></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
     </form>
   );
 };
@@ -763,9 +566,9 @@ const ProductForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({ title: initialData?.title || '', price: initialData?.price || 0 });
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naslov</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
+      <div><Label>Naziv</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
       <div><Label>Cijena</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
-      <div className="flex gap-3"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
     </form>
   );
 };
@@ -776,7 +579,7 @@ const FaqForm = ({ initialData, onSave, onCancel }) => {
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
       <div><Label>Pitanje</Label><Input value={formData.question} onChange={(e) => setFormData({...formData, question: e.target.value})} required /></div>
       <div><Label>Odgovor</Label><Textarea value={formData.answer} onChange={(e) => setFormData({...formData, answer: e.target.value})} required /></div>
-      <div className="flex gap-3"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
     </form>
   );
 };
@@ -786,8 +589,8 @@ const ResultForm = ({ onSave, onCancel }) => {
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
       <div><Label>Image URL</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} required /></div>
-      <div><Label>Opis</Label><Input value={formData.caption} onChange={(e) => setFormData({...formData, caption: e.target.value})} /></div>
-      <div className="flex gap-3"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div><Label>Opis (opciono)</Label><Input value={formData.caption} onChange={(e) => setFormData({...formData, caption: e.target.value})} /></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Dodaj</Button></div>
     </form>
   );
 };
