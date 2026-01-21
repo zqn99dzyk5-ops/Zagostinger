@@ -1523,12 +1523,14 @@ const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
 };
 
 // Program Form
+// Pronađi ProgramForm na dnu fajla i zamijeni je ovim:
 const ProgramForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
     price: initialData?.price || 0,
     currency: initialData?.currency || 'EUR',
+    thumbnail_url: initialData?.thumbnail_url || '', // DODANO
     features: initialData?.features?.join('\n') || '',
     is_active: initialData?.is_active !== false
   });
@@ -1560,7 +1562,19 @@ const ProgramForm = ({ initialData, onSave, onCancel }) => {
           required
         />
       </div>
+      
+      {/* DODANO: Polje za Thumbnail URL */}
+      <div className="space-y-2">
+        <Label>Thumbnail URL (Slika programa)</Label>
+        <Input 
+          value={formData.thumbnail_url} 
+          onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+          placeholder="https://link-do-slike.com/slika.jpg"
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
+        {/* ... ostatak cijena/valuta ostaje isti ... */}
         <div className="space-y-2">
           <Label>Cijena</Label>
           <Input 
