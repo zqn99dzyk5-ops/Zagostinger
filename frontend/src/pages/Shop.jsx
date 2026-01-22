@@ -62,11 +62,12 @@ const Shop = () => {
     
     try {
       const response = await paymentsAPI.createProductCheckout(productId);
-      window.location.href = response.data.url;
+      window.location.href = response.data.checkout_url;
     } catch (error) {
+      console.error('Payment error:', error);
       toast.error('Greška pri pokretanju plaćanja');
     }
-  };
+  };"
 
   const categories = [
     { id: 'all', label: 'Sve', icon: ShoppingBag },
