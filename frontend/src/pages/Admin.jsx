@@ -359,32 +359,63 @@ const Admin = () => {
           </TabsContent>
 
           {/* Shop Tab */}
-          <TabsContent value="shop">
+        <TabsContent value="shop">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Shop Proizvodi</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }}><Plus className="w-4 h-4" /> Novi Proizvod</Button>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Naziv</TableHead><TableHead>Cijena</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {products.map((prod) => (
-                      <TableRow key={prod.id}>
-                        <TableCell>{prod.title}</TableCell><TableCell>€{prod.price}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }}>
+                  <Plus className="w-4 h-4 mr-2" /> Novi Proizvod
+                </Button>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                  <TableHeader>
+                    <TableRow>
+                    <TableHead className="w-20">Slika</TableHead>
+                    <TableHead>Naziv i Opis</TableHead>
+                    <TableHead>Kategorija</TableHead>
+                    <TableHead>Cijena</TableHead>
+                    <TableHead className="text-right">Akcije</TableHead>
+                    </TableRow>
+        </TableHeader>
+        <TableBody>
+          {products.map((prod) => (
+            <TableRow key={prod.id} className="group">
+              <TableCell>
+                <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden border border-white/5">
+                  <img src={prod.image_url} alt="" className="w-full h-full object-cover" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <span className="font-bold">{prod.name}</span>
+                  <span className="text-xs text-muted-foreground line-clamp-1">{prod.description}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                  {prod.category || 'Bez kategorije'}
+                </Badge>
+              </TableCell>
+              <TableCell className="font-semibold">€{prod.price}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati proizvod?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}>
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </CardContent>
+  </Card>
+</TabsContent>
+
 
           {/* Content (FAQ & Results) */}
           <TabsContent value="content" className="space-y-6">
@@ -563,12 +594,54 @@ const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
 };
 
 const ProductForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ title: initialData?.title || '', price: initialData?.price || 0 });
+  const [formData, setFormData] = useState({ 
+    name: initialData?.name || '', 
+    description: initialData?.description || '', // DODANO: Opis proizvoda
+    price: initialData?.price || 0,
+    image_url: initialData?.image_url || '', 
+    category: initialData?.category || ''   
+  });
+
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naziv</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-      <div><Label>Cijena</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+    <form onSubmit={(e) => { 
+      e.preventDefault(); 
+      onSave({...formData, price: parseFloat(formData.price)}); 
+    }} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Naziv Proizvoda</Label>
+          <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
+        </div>
+        <div>
+          <Label>Kategorija</Label>
+          <Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="E-book, Template..." />
+        </div>
+      </div>
+
+      <div>
+        <Label>Opis Proizvoda</Label>
+        <Textarea 
+          value={formData.description} 
+          onChange={(e) => setFormData({...formData, description: e.target.value})} 
+          placeholder="Napišite kratak opis šta kupac dobija..."
+          className="h-24"
+        />
+      </div>
+
+      <div>
+        <Label>Slika Proizvoda (URL)</Label>
+        <Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} placeholder="https://..." />
+      </div>
+
+      <div>
+        <Label>Cijena (€)</Label>
+        <Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required />
+      </div>
+
+      <div className="flex gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button>
+        <Button type="submit" className="flex-1">Spremi Proizvod</Button>
+      </div>
     </form>
   );
 };
