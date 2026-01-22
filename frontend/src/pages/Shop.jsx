@@ -67,7 +67,7 @@ const Shop = () => {
       console.error('Payment error:', error);
       toast.error('Greška pri pokretanju plaćanja');
     }
-  };"
+  };
 
   const categories = [
     { id: 'all', label: 'Sve', icon: ShoppingBag },
