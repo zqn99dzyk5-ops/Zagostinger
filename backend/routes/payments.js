@@ -20,12 +20,18 @@ router.post('/checkout/subscription', auth, async (req, res) => {
   try {
     const { program_id, origin_url } = req.query;
     
+    if (!program_id) {
+      return res.status(400).json({ detail: 'Program ID is required' });
+    }
+    
     const program = await Program.findById(program_id);
     if (!program) {
       return res.status(404).json({ detail: 'Program not found' });
     }
     
     const stripe = getStripe();
+    
+    const baseUrl = origin_url || 'http://localhost:3000';
     
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -36,10 +42,10 @@ router.post('/checkout/subscription', auth, async (req, res) => {
           price_data: {
             currency: (program.currency || 'eur').toLowerCase(),
             product_data: {
-              name: program.name,
-              description: program.description
+              name: program.name || 'Subscription',
+              description: program.description || 'Monthly subscription'
             },
-            unit_amount: Math.round(program.price * 100),
+            unit_amount: Math.round((program.price || 0) * 100),
             recurring: {
               interval: 'month'
             }
@@ -52,8 +58,8 @@ router.post('/checkout/subscription', auth, async (req, res) => {
         program_id: program_id,
         type: 'subscription'
       },
-      success_url: `${origin_url}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin_url}/#programs`
+      success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/#programs`
     });
     
     res.json({ checkout_url: session.url, session_id: session.id });
@@ -68,12 +74,18 @@ router.post('/checkout/product', auth, async (req, res) => {
   try {
     const { product_id, origin_url } = req.query;
     
+    if (!product_id) {
+      return res.status(400).json({ detail: 'Product ID is required' });
+    }
+    
     const product = await ShopProduct.findById(product_id);
     if (!product) {
       return res.status(404).json({ detail: 'Product not found' });
     }
     
     const stripe = getStripe();
+    
+    const baseUrl = origin_url || 'http://localhost:3000';
     
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -84,10 +96,10 @@ router.post('/checkout/product', auth, async (req, res) => {
           price_data: {
             currency: (product.currency || 'eur').toLowerCase(),
             product_data: {
-              name: product.title,
-              description: product.description
+              name: product.title || 'Product',
+              description: product.description || 'One-time purchase'
             },
-            unit_amount: Math.round(product.price * 100)
+            unit_amount: Math.round((product.price || 0) * 100)
           },
           quantity: 1
         }
@@ -97,8 +109,8 @@ router.post('/checkout/product', auth, async (req, res) => {
         product_id: product_id,
         type: 'product'
       },
-      success_url: `${origin_url}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin_url}/shop`
+      success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/shop`
     });
     
     res.json({ checkout_url: session.url, session_id: session.id });
