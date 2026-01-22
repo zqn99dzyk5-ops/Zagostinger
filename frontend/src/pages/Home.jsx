@@ -68,13 +68,12 @@ const Home = () => {
     
     try {
       const response = await paymentsAPI.createSubscriptionCheckout(programId);
-      if (response?.data?.url) {
-        window.location.href = response.data.url;
-      }
+      window.location.href = response.data.checkout_url;
     } catch (error) {
+      console.error('Payment error:', error);
       toast.error('Greška pri pokretanju plaćanja');
     }
-  };
+  };"
 
   const fadeUp = {
     initial: { opacity: 0, y: 20 },
