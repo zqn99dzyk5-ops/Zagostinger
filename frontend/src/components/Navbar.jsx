@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, User, LogOut, LayoutDashboard, ShoppingBag, Settings } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '../lib/auth';
 import { useSettings } from '../lib/settings';
@@ -9,15 +9,15 @@ import { useSettings } from '../lib/settings';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { settings } = useSettings();
+  const { settings = {} } = useSettings(); // Default prazan objekt
   const navigate = useNavigate();
   const location = useLocation();
 
   const navLinks = [
-    { href: '/', label: 'Početna' },
-    { href: '/#programs', label: 'Programi' },
-    { href: '/shop', label: 'Shop' },
-    { href: '/#faq', label: 'FAQ' },
+    { href: '/', label: 'Početna', isExternal: false },
+    { href: '/#programs', label: 'Programi', isExternal: true },
+    { href: '/shop', label: 'Shop', isExternal: false },
+    { href: '/#faq', label: 'FAQ', isExternal: true },
   ];
 
   const handleLogout = () => {
@@ -34,9 +34,10 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between h-20">
+          
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3" data-testid="nav-logo">
-            {settings.logo_url ? (
+          <Link to="/" className="flex items-center gap-3">
+            {settings?.logo_url ? (
               <img 
                 src={settings.logo_url} 
                 alt={settings.site_name || 'Logo'} 
@@ -48,23 +49,34 @@ const Navbar = () => {
               </div>
             )}
             <span className="font-heading text-xl font-semibold text-foreground hidden sm:block">
-              {settings.site_name || 'Continental Academy'}
+              {settings?.site_name || 'Continental Academy'}
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive(link.href) ? 'text-primary' : 'text-muted-foreground'
-                }`}
-                data-testid={`nav-link-${link.label.toLowerCase()}`}
-              >
-                {link.label}
-              </a>
+              link.isExternal ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={`text-sm font-medium transition-all duration-300 ${
+                    isActive(link.href) ? 'text-white' : 'text-orange-400 hover:text-pink-400'
+                  }`}
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`text-sm font-medium transition-all duration-300 ${
+                    isActive(link.href) ? 'text-white' : 'text-orange-400 hover:text-pink-400'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </div>
 
@@ -73,14 +85,14 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-3">
                 <Link to="/dashboard">
-                  <Button variant="ghost" size="sm" className="gap-2" data-testid="nav-dashboard-btn">
+                  <Button variant="ghost" size="sm" className="gap-2">
                     <LayoutDashboard className="w-4 h-4" />
                     Dashboard
                   </Button>
                 </Link>
                 {user.role === 'admin' && (
                   <Link to="/admin">
-                    <Button variant="ghost" size="sm" className="gap-2" data-testid="nav-admin-btn">
+                    <Button variant="ghost" size="sm" className="gap-2">
                       <Settings className="w-4 h-4" />
                       Admin
                     </Button>
@@ -91,7 +103,6 @@ const Navbar = () => {
                   size="sm" 
                   onClick={handleLogout}
                   className="gap-2 text-muted-foreground"
-                  data-testid="nav-logout-btn"
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>
@@ -99,16 +110,10 @@ const Navbar = () => {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" size="sm" data-testid="nav-login-btn">
-                    Prijava
-                  </Button>
+                  <Button variant="ghost" size="sm">Prijava</Button>
                 </Link>
                 <Link to="/register">
-                  <Button 
-                    size="sm" 
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6"
-                    data-testid="nav-register-btn"
-                  >
+                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">
                     Započni
                   </Button>
                 </Link>
@@ -117,11 +122,7 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="lg:hidden p-2"
-            onClick={() => setIsOpen(!isOpen)}
-            data-testid="nav-mobile-toggle"
-          >
+          <button className="lg:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -134,14 +135,14 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-card border-t border-white/5"
+            className="lg:hidden bg-card border-t border-white/5 overflow-hidden"
           >
             <div className="px-6 py-6 space-y-4">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="block py-2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="block py-2 text-orange-400 hover:text-pink-400 transition-all duration-300"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
