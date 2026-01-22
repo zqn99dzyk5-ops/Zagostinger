@@ -193,6 +193,52 @@ const Home = () => {
           <ChevronDown className="w-6 h-6 text-muted-foreground" />
         </motion.div>
       </section>
+  
+      {/* Why Us Section */}
+  <section className="py-24 bg-background relative overflow-hidden">
+    <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <div className="text-center mb-16">
+        <span className="text-primary font-semibold tracking-wider uppercase text-sm">Prednosti</span>
+        <h2 className="text-4xl font-bold mt-4">Zašto baš Continental Academy?</h2>
+      </div>
+
+    <div className="grid md:grid-cols-3 gap-8">
+      {[
+        {
+          icon: <TrendingUp className="w-8 h-8 text-primary" />,
+          title: "Dokazane Strategije",
+          desc: "Naše metode nisu teorija, već sistemi koji trenutno donose profit na tržištu."
+        },
+        {
+          icon: <Users className="w-8 h-8 text-primary" />,
+          title: "Zajednica i Podrška",
+          desc: "Pristup privatnom Discordu gdje direktno komuniciraš sa mentorima i kolegama."
+        },
+        {
+          icon: <Check className="w-8 h-8 text-primary" />,
+          title: "Praktično Znanje",
+          desc: "Fokusiramo se na 'step-by-step' tutorijale koji te vode od nule do prve zarade."
+        }
+      ].map((feature, i) => (
+        <motion.div 
+          key={i}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.1 }}
+          className="p-8 rounded-2xl bg-card border border-white/5 hover:border-primary/20 transition-colors"
+        >
+          <div className="mb-6 w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
+            {feature.icon}
+          </div>
+          <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+          <p className="text-muted-foreground leading-relaxed">
+            {feature.desc}
+          </p>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
 
         {/* Programs Section */}
         <section id="programs" className="py-24 lg:py-32 bg-card/30">
