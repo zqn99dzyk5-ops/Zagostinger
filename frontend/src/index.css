@@ -105,7 +105,7 @@
   }
 }
 
-@layer base {
+@@layer base {
   * {
     @apply border-border;
   }
@@ -115,13 +115,34 @@
   }
   
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
+    position: relative;
+    background: #0a0a0c;
+  }
+  
+  /* Orange & Pink glow effect for dark theme */
+  [data-theme=\"dark-luxury\"] body::before,
+  :root body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(ellipse 80% 60% at 0% 0%, rgba(255, 100, 50, 0.22) 0%, transparent 50%),
+      radial-gradient(ellipse 70% 60% at 100% 0%, rgba(255, 50, 150, 0.18) 0%, transparent 50%),
+      radial-gradient(ellipse 70% 60% at 100% 100%, rgba(255, 80, 50, 0.18) 0%, transparent 50%),
+      radial-gradient(ellipse 70% 60% at 0% 100%, rgba(255, 80, 150, 0.15) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
   }
+
 }
 
 @layer utilities {
