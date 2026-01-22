@@ -73,7 +73,7 @@ const Home = () => {
       console.error('Payment error:', error);
       toast.error('Greška pri pokretanju plaćanja');
     }
-  };"
+  };
 
   const fadeUp = {
     initial: { opacity: 0, y: 20 },
