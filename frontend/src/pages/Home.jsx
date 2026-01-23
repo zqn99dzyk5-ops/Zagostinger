@@ -43,7 +43,16 @@ const Home = () => {
 
         const settingsData = settingsRes?.data;
         setSettings(Array.isArray(settingsData) ? settingsData[0] : (settingsData || {}));
-
+        
+        if (settingsData.favicon_url) {
+          let link = document.querySelector("link[rel~='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          link.href = settingsData.favicon_url;
+      }
         if (analyticsAPI?.trackEvent) {
           analyticsAPI.trackEvent({ event_type: 'page_view', page: 'home', metadata: {} });
         }
@@ -88,18 +97,19 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-      {/* HERO SECTION */}
-      <section className="relative min-h-screen flex items-center pt-20">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background z-10" />
-          
-          {/* IZBAČEN object-contain: Sada je object-cover na svim uređajima */}
-          <img 
-            src="https://cdn.discordapp.com/attachments/1449109680805642361/1464146919348506858/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg?ex=69746894&is=69731714&hm=469a212a3fe2cf1ea254632dc73b50d2e8ed0d67ae820b8261771fa9c05aedf2&"
-            alt="Background"
-            className="w-full h-full object-cover object-center opacity-[0.65]"
-          />
-        </div>
+{/* BACKGROUND SLIKA SEKCIJA */}
+  <div className="absolute inset-0 overflow-hidden">
+    {/* Overlay gradijent - daje onaj tamni šmek da se tekst vidi */}
+    <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background z-10" />
+  
+    {/* Slika koja se sada rasteže na svim uređajima */}
+    <img 
+      src="https://i.ibb.co/671phtBt/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"
+      alt="Background"
+      className="w-full h-full object-cover object-center opacity-[0.65]"
+    />
+  </div>
+
         
         <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-12 py-24 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
