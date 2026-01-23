@@ -19,21 +19,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* =======================
-   CORS
+   CORS (Sređen da ne blokira frontend)
 ======================= */
 app.use(cors({
-  origin: true, 
+  origin: true, // Dozvoljava svim originima dok si u testnoj fazi
   credentials: true,
 }));
 
 /* =======================
-   BODY PARSERS (VAŽAN REDOSLIJED)
+   BODY PARSERS
 ======================= */
-
-// 1. Stripe webhook MORA ići prije express.json()
+// Stripe webhook needs raw body
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
-// 2. Standardni JSON parser za sve ostale rute
+// JSON for everything else
 app.use(express.json({ limit: '1mb' }));
 
 /* =======================
@@ -49,17 +48,21 @@ app.get('/api/health', (req, res) => {
 });
 
 /* =======================
-   API ROUTES
+   API ROUTES (Pravilan redoslijed)
 ======================= */
+
+// 1. Prvo rute sa prefiksima
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api', publicRoutes);
 
-// Fix za Analytics
+// 2. Fix za Analytics (POST mora biti definisan pre opšteg GET *)
 app.post('/api/analytics/event', async (req, res) => {
   res.status(204).end();
 });
+
+// 3. Javne rute (poput /api/courses)
+app.use('/api', publicRoutes);
 
 /* =======================
    STATIC REACT BUILD
@@ -67,12 +70,14 @@ app.post('/api/analytics/event', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* =======================
-   REACT ROUTER FALLBACK
+   REACT ROUTER FALLBACK (Mora biti na dnu)
 ======================= */
 app.get('*', (req, res) => {
+  // Ako zahtjev ide na /api a nije nađen iznad, vrati 404
   if (req.originalUrl.startsWith('/api')) {
     return res.status(404).json({ message: 'API route not found' });
   }
+  // Za sve ostalo serviraj frontend
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -90,13 +95,23 @@ const initializeDefaults = async () => {
     const userCount = await User.countDocuments();
     if (userCount === 0) {
       const adminPassword = crypto.randomBytes(8).toString('hex');
+
       await new User({
         name: 'Admin',
         email: 'admin@test.com',
         password: adminPassword,
         role: 'admin',
       }).save();
-      console.log('✓ Admin created: admin@test.com / ' + adminPassword);
+
+      await new User({
+        name: 'Student',
+        email: 'student@test.com',
+        password: 'student123',
+        role: 'user',
+      }).save();
+
+      console.log('✓ Default users created');
+      console.log(`Admin login: admin@test.com / ${adminPassword}`);
     }
   } catch (err) {
     console.error('Error initializing defaults:', err);
@@ -112,13 +127,18 @@ const startServer = async () => {
       console.error('❌ MONGO_URL not set');
       process.exit(1);
     }
+
     await mongoose.connect(process.env.MONGO_URL, {
       dbName: process.env.DB_NAME || 'continental_academy',
+      serverSelectionTimeoutMS: 10000,
     });
+
     console.log('✓ MongoDB connected');
+
     await initializeDefaults();
+
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✓ Server running on port ${PORT}`);
+      console.log(`✓ Server running on http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error('❌ Failed to start server:', err);
@@ -126,9 +146,16 @@ const startServer = async () => {
   }
 };
 
-process.on('SIGINT', async () => {
+/* =======================
+   GRACEFUL SHUTDOWN
+======================= */
+const shutdown = async () => {
+  console.log('\nShutting down...');
   await mongoose.connection.close();
   process.exit(0);
-});
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 startServer();
