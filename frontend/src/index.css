@@ -119,12 +119,11 @@
     @apply text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
     position: relative;
-    /* Popravljeno: Pozadina koristi varijablu teme */
     background-color: hsl(var(--background));
     min-height: 100vh;
   }
   
-  /* Orange & Pink glow effect - FIXED to cover full height and stay fixed */
+  /* Orange & Pink glow effect - FIXED z-index to show over backgrounds */
   [data-theme="dark-luxury"] body::before,
   [data-theme="midnight-purple"] body::before,
   :root body::before {
@@ -141,7 +140,7 @@
       radial-gradient(circle at 0% 100%, rgba(255, 80, 150, 0.12) 0%, transparent 50%),
       radial-gradient(circle at 50% 50%, rgba(255, 100, 50, 0.04) 0%, transparent 70%);
     pointer-events: none;
-    z-index: -1; /* Mora biti negativno da ne prekrije tekst */
+    z-index: 1; /* Promijenjeno sa -1 na 1 da bude vidljivo preko pozadinskih boja */
   }
 
   /* Isključi sjene na svijetlim temama da ne smetaju čitljivosti */
@@ -150,6 +149,12 @@
     display: none !important;
   }
   
+  /* Da bi sadržaj bio iznad Glow efekta, dodajemo z-index na aplikaciju */
+  #root {
+    position: relative;
+    z-index: 10;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
   }
