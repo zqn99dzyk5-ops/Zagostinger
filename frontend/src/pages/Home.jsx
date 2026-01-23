@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 const Home = () => {
   const [programs, setPrograms] = useState([]);
   const [faqs, setFaqs] = useState([]);
-  const [results, setResults] = useState([]); // Ispravljeno: setResults
+  const [results, setResults] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -87,21 +87,19 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    /* Promijenjeno u bg-transparent da bi se vidio glow iz index.css */
+    <div className="min-h-screen bg-transparent">
       {/* HERO SECTION */}
       <section className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 overflow-hidden">
-          {/* Overlay gradijent */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background z-10" />
+          {/* Overlay gradijent - blago smanjen opacity (via-background/60) za bolju vidljivost slike */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background z-10" />
           
-          {/* BACKGROUND SLIKA - POPRAVKA ZA MOBILNI */}
+          {/* BACKGROUND SLIKA - POJAČANA VIDLJIVOST NA 65% (opacity-[0.65]) */}
           <img 
             src="https://cdn.discordapp.com/attachments/1449109680805642361/1464146919348506858/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg?ex=69746894&is=69731714&hm=469a212a3fe2cf1ea254632dc73b50d2e8ed0d67ae820b8261771fa9c05aedf2&"
             alt="Background"
-            /* Na mobilnom (ispod 'md' brejkpointa) koristimo object-contain da se vidi CIJELA slika.
-               Na desktopu (md:) koristimo object-cover da popuni ekran.
-            */
-            className="w-full h-full object-contain md:object-cover object-center opacity-50 md:opacity-50"
+            className="w-full h-full object-contain md:object-cover object-center opacity-[0.65] md:opacity-[0.65]"
           />
         </div>
         
@@ -198,7 +196,7 @@ const Home = () => {
       </section>
   
       {/* WHY US SECTION */}
-      <section className="py-24 bg-background relative overflow-hidden">
+      <section className="py-24 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-16">
             <span className="text-primary font-semibold tracking-wider uppercase text-sm">Prednosti</span>
@@ -228,7 +226,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-2xl bg-card border border-white/5 hover:border-primary/20 transition-colors"
+                className="p-8 rounded-2xl bg-card/50 backdrop-blur-sm border border-white/5 hover:border-primary/20 transition-colors"
               >
                 <div className="mb-6 w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
                   {feature.icon}
@@ -244,7 +242,7 @@ const Home = () => {
       </section>
 
       {/* PROGRAMS SECTION */}
-      <section id="programs" className="py-24 lg:py-32 bg-card/30">
+      <section id="programs" className="py-24 lg:py-32 bg-card/10 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-16">
             <span className="text-primary font-semibold tracking-wider uppercase text-sm">Naši programi</span>
@@ -261,7 +259,7 @@ const Home = () => {
                 transition={{ delay: index * 0.1 }}
                 className="h-full"
               >
-                <Card className="h-full flex flex-col bg-card border-white/5 hover:border-primary/20 transition-all overflow-hidden group">
+                <Card className="h-full flex flex-col bg-card/80 backdrop-blur-md border-white/5 hover:border-primary/20 transition-all overflow-hidden group">
                   <div className="aspect-video w-full overflow-hidden bg-muted relative">
                     {program.thumbnail_url ? (
                       <img 
@@ -330,12 +328,12 @@ const Home = () => {
       </section>
 
       {/* FAQ SECTION */}
-      <section id="faq" className="py-24 lg:py-32 bg-card/30">
+      <section id="faq" className="py-24 lg:py-32 bg-card/20 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-6">
           <h2 className="text-4xl font-bold text-center mb-12">Često postavljana pitanja</h2>
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq) => (
-              <AccordionItem key={faq.id} value={faq.id} className="bg-background px-6 rounded-xl border-white/5 shadow-sm">
+              <AccordionItem key={faq.id} value={faq.id} className="bg-background/60 backdrop-blur-md px-6 rounded-xl border-white/5 shadow-sm">
                 <AccordionTrigger className="hover:no-underline">{faq.question}</AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">{faq.answer}</AccordionContent>
               </AccordionItem>
