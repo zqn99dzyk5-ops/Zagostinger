@@ -96,7 +96,7 @@ const Home = () => {
           
           {/* BACKGROUND SLIKA - POPRAVKA ZA MOBILNI */}
           <img 
-            src="https://images.unsplash.com/photo-1684488624316-774ea1824d97?auto=format&fit=crop&q=80"
+            src="https://cdn.discordapp.com/attachments/1449109680805642361/1464146919348506858/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg?ex=69746894&is=69731714&hm=469a212a3fe2cf1ea254632dc73b50d2e8ed0d67ae820b8261771fa9c05aedf2&"
             alt="Background"
             /* Na mobilnom (ispod 'md' brejkpointa) koristimo object-contain da se vidi CIJELA slika.
                Na desktopu (md:) koristimo object-cover da popuni ekran.
