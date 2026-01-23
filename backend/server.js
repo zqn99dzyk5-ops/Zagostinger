@@ -20,37 +20,60 @@ const PORT = process.env.PORT || 8001;
 /* =======================
    CORS
 ======================= */
-const corsOrigins = process.env.CORS_ORIGINS === '*'
+const corsOrigins =
+  process.env.CORS_ORIGINS === '*'
     ? true
     : process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
     : ['http://localhost:3000'];
 
-app.use(cors({
+app.use(
+  cors({
     origin: corsOrigins,
     credentials: true,
-}));
+  })
+);
 
 /* =======================
-   BODY PARSERS (VAŽAN REDOSLIJED)
+   BODY PARSERS
 ======================= */
 
-// 1. Stripe webhook MORA biti definisan prije express.json()
+// Stripe webhook needs raw body
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
-// 2. Standardni JSON parser
+// Everything else uses JSON
 app.use(express.json({ limit: '1mb' }));
 
 /* =======================
-   API ROUTES
+   HEALTH CHECK
+======================= */
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'Continental Academy API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/* =======================
+   ROUTES
 ======================= */
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api', publicRoutes);
 
+/* =======================
+   ANALYTICS (FIX ZA 405)
+======================= */
 app.post('/api/analytics/event', async (req, res) => {
-  res.status(204).end();
+  try {
+    // možeš kasnije spremati u DB
+    res.status(204).end(); // silent success
+  } catch {
+    res.status(204).end();
+  }
 });
 
 /* =======================
@@ -62,6 +85,28 @@ const initializeDefaults = async () => {
     if (!existingSettings) {
       await new Settings({ type: 'site' }).save();
       console.log('✓ Default settings created');
+    }
+
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      const adminPassword = crypto.randomBytes(8).toString('hex');
+
+      await new User({
+        name: 'Admin',
+        email: 'admin@test.com',
+        password: adminPassword,
+        role: 'admin',
+      }).save();
+
+      await new User({
+        name: 'Student',
+        email: 'student@test.com',
+        password: 'student123',
+        role: 'user',
+      }).save();
+
+      console.log('✓ Admin user created');
+      console.log(`  admin@test.com / ${adminPassword}`);
     }
   } catch (err) {
     console.error('Error initializing defaults:', err);
@@ -77,13 +122,18 @@ const startServer = async () => {
       console.error('❌ MONGO_URL not set');
       process.exit(1);
     }
+
     await mongoose.connect(process.env.MONGO_URL, {
       dbName: process.env.DB_NAME || 'continental_academy',
+      serverSelectionTimeoutMS: 10000,
     });
+
     console.log('✓ MongoDB connected');
+
     await initializeDefaults();
+
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✓ API Server running on port ${PORT}`);
+      console.log(`✓ Server running on http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error('❌ Failed to start server:', err);
@@ -91,9 +141,16 @@ const startServer = async () => {
   }
 };
 
-process.on('SIGINT', async () => {
+/* =======================
+   GRACEFUL SHUTDOWN
+======================= */
+const shutdown = async () => {
+  console.log('\nShutting down...');
   await mongoose.connection.close();
   process.exit(0);
-});
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 startServer();
