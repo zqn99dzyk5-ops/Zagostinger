@@ -1,5 +1,6 @@
 import "@/index.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { SettingsProvider } from "./lib/settings";
@@ -13,13 +14,22 @@ import CourseView from "./pages/CourseView";
 import Shop from "./pages/Shop";
 import Admin from "./pages/Admin";
 
-// Protected Route Component
+// Pomoćna komponenta: Automatski skroluje na vrh stranice pri promeni rute
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
+// Protected Route - Zaustavlja neovlašten upad u Dashboard ili Admin
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -36,13 +46,13 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   return children;
 };
 
-// Public Route - redirects to dashboard if already logged in
+// Public Route - Ne dozvoljava ulogovanom korisniku da ide opet na login/register
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -55,27 +65,27 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// Layout with Navbar and Footer
+// Layout - Standardni omotač za stranice
 const Layout = ({ children, showFooter = true }) => (
-  <>
+  <div className="relative flex flex-col min-h-screen">
     <Navbar />
-    <main className="min-h-screen">{children}</main>
+    <main className="flex-grow">{children}</main>
     {showFooter && <Footer />}
-    {/* Noise texture overlay */}
-    <div className="noise-overlay" />
-  </>
+    {/* Noise texture overlay za luxury look */}
+    <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03] noise-overlay" />
+  </div>
 );
 
 function AppContent() {
   return (
     <BrowserRouter>
+      <ScrollToTop /> {/* Aktiviran auto-scroll */}
       <Routes>
-        {/* Public Routes */}
+        {/* Javno dostupne rute */}
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/shop" element={<Layout><Shop /></Layout>} />
-        <Route path="/shop/success" element={<Layout><Shop /></Layout>} />
         
-        {/* Auth Routes */}
+        {/* Rute za Autentifikaciju */}
         <Route path="/login" element={
           <PublicRoute>
             <Layout showFooter={false}><Login /></Layout>
@@ -87,7 +97,7 @@ function AppContent() {
           </PublicRoute>
         } />
         
-        {/* Protected Routes */}
+        {/* Zaštićene rute za studente */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Layout><Dashboard /></Layout>
@@ -95,21 +105,22 @@ function AppContent() {
         } />
         <Route path="/course/:courseId" element={
           <ProtectedRoute>
+            {/* CourseView obično ima svoj side-nav ili player, pa gasimo footer */}
             <Layout showFooter={false}><CourseView /></Layout>
           </ProtectedRoute>
         } />
         
-        {/* Admin Routes */}
+        {/* Admin Panel - Samo za ulogu 'admin' */}
         <Route path="/admin" element={
           <ProtectedRoute requireAdmin>
             <Layout><Admin /></Layout>
           </ProtectedRoute>
         } />
         
-        {/* Fallback */}
+        {/* Redirect ako korisnik ukuca nepostojeći URL */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <Toaster position="top-right" />
+      <Toaster position="top-right" richColors /> {/* Dodat richColors za lepše notifikacije */}
     </BrowserRouter>
   );
 }
