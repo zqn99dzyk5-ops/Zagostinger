@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Zap, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Zap, CheckCircle2, Star, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
@@ -11,14 +11,42 @@ const Shop = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Učitavanje proizvoda iz baze
+  // Fallback proizvodi - prikazuju se ako je baza prazna
+  const defaultProducts = [
+    {
+      _id: '1',
+      title: 'Aged Ads Manager (High Limit)',
+      price: 149,
+      description: 'Verifikovan Business Manager spreman za velike budžete bez restrikcija.',
+      is_available: true
+    },
+    {
+      _id: '2',
+      title: 'E-com Blueprint Assets',
+      price: 89,
+      description: 'Kompletna arhiva pobedničkih oglasa i landing stranica za 2024.',
+      is_available: true
+    },
+    {
+      _id: '3',
+      title: 'Premium Proxy Pack (1 Month)',
+      price: 45,
+      description: 'Najbrži rezidencijalni proxiji za sigurno vođenje više naloga.',
+      is_available: true
+    }
+  ];
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get('/api/products');
-        setProducts(res.data);
+        if (res.data && res.data.length > 0) {
+          setProducts(res.data);
+        } else {
+          setProducts(defaultProducts);
+        }
       } catch (err) {
-        console.error("Greška pri učitavanju shopa", err);
+        setProducts(defaultProducts);
       }
     };
     fetchProducts();
@@ -26,88 +54,107 @@ const Shop = () => {
 
   const handlePurchase = async (productId) => {
     if (!user) {
-      toast.error("Moraš biti prijavljen da bi izvršio kupovinu.");
+      toast.error("Moraš biti prijavljen za kupovinu.");
       return;
     }
 
     setLoading(productId);
     try {
-      // Pozivamo tvoj novi payment route
       const res = await axios.post(`/api/payments/checkout/product?product_id=${productId}`);
-      
-      // Preusmjeravanje na Stripe Checkout
       if (res.data.checkout_url) {
         window.location.href = res.data.checkout_url;
       }
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Greška pri pokretanju plaćanja.");
+      toast.error("Greška pri pokretanju uplate.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="pt-32 pb-20 px-6 lg:px-12 max-w-7xl mx-auto">
-      <div className="text-center mb-16">
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-6xl font-heading font-bold mb-6"
-        >
-          Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500">Digital Shop</span>
-        </motion.h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Ekskluzivni nalozi, resursi i alati spremni za tvoj digitalni biznis.
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#050505] text-white pt-32 pb-24 overflow-hidden relative">
+      
+      {/* Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-orange-500/10 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-pink-500/10 blur-[150px] pointer-events-none" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map((product) => (
-          <motion.div 
-            key={product._id}
-            whileHover={{ y: -10 }}
-            className="glass-card overflow-hidden group border border-white/5"
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        
+        {/* Header Sekcija */}
+        <div className="text-center mb-24">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6"
           >
-            {/* Image Placeholder / Product Image */}
-            <div className="relative h-48 bg-white/5 overflow-hidden">
-              <img 
-                src={product.image || 'https://via.placeholder.com/400x300'} 
-                alt={product.title}
-                className="w-full h-full object-cover transition-transform group-hover:scale-110"
-              />
-              <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-orange-500/30">
-                <span className="text-orange-400 font-bold">€{product.price}</span>
-              </div>
-            </div>
-
-            <div className="p-6">
-              <h3 className="text-xl font-bold mb-2 text-white">{product.title}</h3>
-              <p className="text-muted-foreground text-sm mb-6 line-clamp-2">
-                {product.description}
-              </p>
-
-              <div className="space-y-3 mb-8">
-                <div className="flex items-center gap-2 text-sm text-foreground/80">
-                  <CheckCircle2 className="w-4 h-4 text-pink-500" />
-                  <span>Instant dostava na mail</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-foreground/80">
-                  <Zap className="w-4 h-4 text-orange-400" />
-                  <span>Full pristup nalogu</span>
-                </div>
-              </div>
-
-              <Button 
-                onClick={() => handlePurchase(product._id)}
-                disabled={loading === product._id || !product.is_available}
-                className="w-full py-6 rounded-xl font-bold transition-all duration-300 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 shadow-lg shadow-orange-500/20"
-              >
-                {loading === product._id ? "Procesiranje..." : product.is_available ? "KUPI ODMAH" : "PRODATO"}
-              </Button>
-            </div>
+            <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
+            <span className="text-xs font-bold tracking-[0.2em] uppercase">Premium Digital Resources</span>
           </motion.div>
-        ))}
+          
+          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter">
+            DIGITAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500">ASSETS</span>
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg font-light leading-relaxed">
+            Nabavi alate i resurse koje koriste vrhunski digitalni preduzetnici za automatizaciju i profit.
+          </p>
+        </div>
+
+        {/* Mreža Proizvoda */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {products.map((product) => (
+            <motion.div 
+              key={product._id}
+              whileHover={{ y: -10 }}
+              className="group relative bg-[#0a0a0a] rounded-[2.5rem] p-10 border border-white/5 overflow-hidden transition-all duration-500 hover:border-orange-500/30"
+            >
+              {/* Card Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-8">
+                  <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-orange-500/10 transition-colors">
+                    <Zap className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Cena</p>
+                    <p className="text-3xl font-black text-white tracking-tighter">€{product.price}</p>
+                  </div>
+                </div>
+
+                <h3 className="text-2xl font-bold mb-4 tracking-tight group-hover:text-orange-400 transition-colors">
+                  {product.title}
+                </h3>
+                
+                <p className="text-muted-foreground text-sm leading-relaxed mb-8 h-12 line-clamp-2 italic">
+                  {product.description}
+                </p>
+
+                <div className="space-y-4 mb-10">
+                  <div className="flex items-center gap-3 text-sm font-medium text-white/70">
+                    <ShieldCheck className="w-4 h-4 text-pink-500" />
+                    <span>Instant dostava</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-white/70">
+                    <CheckCircle2 className="w-4 h-4 text-orange-500" />
+                    <span>Full garancija na ispravnost</span>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={() => handlePurchase(product._id)}
+                  disabled={loading === product._id}
+                  className="w-full py-8 rounded-2xl font-black tracking-widest bg-white text-black hover:bg-gradient-to-r hover:from-orange-500 hover:to-pink-600 hover:text-white transition-all duration-500 shadow-xl"
+                >
+                  {loading === product._id ? "UČITAVANJE..." : "KUPI ODMAH"}
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
+
+      {/* Decorative Bottom Glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-pink-500/5 blur-[100px] pointer-events-none" />
     </div>
   );
 };
