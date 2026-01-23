@@ -114,8 +114,8 @@ const Home = () => {
       <section className="py-20 border-y border-white/5 bg-black/40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
           {[
-            { label: 'Studenata', value: '1,200+', icon: Users },
-            { label: 'Projekata', value: '85', icon: Zap },
+            { label: 'Studenata', value: '500+', icon: Users },
+            { label: 'Projekata', value: '90+', icon: Zap },
             { label: 'Ocena', value: '4.9/5', icon: Star },
             { label: 'Zajednica', value: '24/7', icon: ShieldCheck }
           ].map((stat, i) => (
