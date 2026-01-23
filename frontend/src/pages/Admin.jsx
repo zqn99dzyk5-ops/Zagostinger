@@ -5,7 +5,7 @@ import {
   Plus, Trash2, Edit, Save, Loader2, MessageCircle, 
   FileText, Image, Video, DollarSign, Palette, GraduationCap,
   PlayCircle, Clock, ChevronDown, ChevronUp, Eye, EyeOff, X,
-  Link as LinkIcon, Mail, Phone, Globe
+  Link as LinkIcon, Mail, Phone, Globe, Instagram, Youtube, Facebook
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -256,6 +256,7 @@ const Admin = () => {
             </div>
           </TabsContent>
 
+          {/* Korisnici Tab */}
           <TabsContent value="users">
             <Card className="luxury-card">
               <CardHeader><CardTitle>Upravljanje korisnicima</CardTitle></CardHeader>
@@ -281,6 +282,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Kursevi Tab */}
           <TabsContent value="courses">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -321,6 +323,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Programi Tab */}
           <TabsContent value="programs">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -350,6 +353,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Shop Tab */}
           <TabsContent value="shop">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -368,45 +372,46 @@ const Admin = () => {
                     <TableHead>Cijena</TableHead>
                     <TableHead className="text-right">Akcije</TableHead>
                     </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((prod) => (
-            <TableRow key={prod.id} className="group">
-              <TableCell>
-                <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden border border-white/5">
-                  <img src={prod.image_url} alt="" className="w-full h-full object-cover" />
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-bold">{prod.name}</span>
-                  <span className="text-xs text-muted-foreground line-clamp-1">{prod.description}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-                  {prod.category || 'Bez kategorije'}
-                </Badge>
-              </TableCell>
-              <TableCell className="font-semibold">€{prod.price}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati proizvod?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}>
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </CardContent>
-  </Card>
-</TabsContent>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((prod) => (
+                      <TableRow key={prod.id} className="group">
+                        <TableCell>
+                          <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden border border-white/5">
+                            <img src={prod.image_url} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-bold">{prod.name}</span>
+                            <span className="text-xs text-muted-foreground line-clamp-1">{prod.description}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 capitalize">
+                            {prod.category || 'Bez kategorije'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-semibold">€{prod.price}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati proizvod?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}>
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
+          {/* Sadržaj Tab */}
           <TabsContent value="content" className="space-y-6">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -435,6 +440,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Postavke Tab (Gde su Linkovi) */}
           <TabsContent value="settings" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="luxury-card">
@@ -445,6 +451,7 @@ const Admin = () => {
                   <div><Label>Favicon URL</Label><Input value={settings.favicon_url || ''} onChange={(e) => setSettings({...settings, favicon_url: e.target.value})} /></div>
                 </CardContent>
               </Card>
+
               <Card className="luxury-card">
                 <CardHeader><CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Hero & Media (Mux)</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -460,26 +467,51 @@ const Admin = () => {
                   <div><Label>Subheadline</Label><Textarea value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
                 </CardContent>
               </Card>
+
+              {/* VRACENE OPCIJE ZA LINKOVE */}
               <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Social & Contact</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Social Media Links</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div><Label>Discord Link</Label><Input value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} /></div>
-                  <div><Label>Contact Email</Label><Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} /></div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Instagram className="w-4 h-4 text-pink-500" /> Instagram URL</Label>
+                    <Input placeholder="https://instagram.com/vasprofil" value={settings.instagram_url || ''} onChange={(e) => setSettings({...settings, instagram_url: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Youtube className="w-4 h-4 text-red-500" /> YouTube URL</Label>
+                    <Input placeholder="https://youtube.com/@vaskanal" value={settings.youtube_url || ''} onChange={(e) => setSettings({...settings, youtube_url: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-indigo-500" /> Discord Invite URL</Label>
+                    <Input placeholder="https://discord.gg/invite" value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Facebook className="w-4 h-4 text-blue-600" /> Facebook URL</Label>
+                    <Input placeholder="https://facebook.com/vasafanstrana" value={settings.facebook_url || ''} onChange={(e) => setSettings({...settings, facebook_url: e.target.value})} />
+                  </div>
                 </CardContent>
               </Card>
+
               <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5" /> Vidljivost</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5" /> Contact Info</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div><Label>Contact Email</Label><Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} /></div>
+                  <div><Label>Contact Phone (opciono)</Label><Input value={settings.contact_phone || ''} onChange={(e) => setSettings({...settings, contact_phone: e.target.value})} /></div>
+                </CardContent>
+              </Card>
+
+              <Card className="luxury-card">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5" /> Vidljivost Sekcija</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between"><Label>Prikaži Rezultate</Label><Switch checked={settings.show_results_section} onCheckedChange={(v) => setSettings({...settings, show_results_section: v})} /></div>
                   <div className="flex items-center justify-between"><Label>Prikaži FAQ</Label><Switch checked={settings.show_faq_section} onCheckedChange={(v) => setSettings({...settings, show_faq_section: v})} /></div>
                 </CardContent>
               </Card>
             </div>
-            <div className="flex justify-end pt-4"><Button size="lg" onClick={handleUpdateSettings}><Save className="mr-2 w-5 h-5" /> Spremi Sve Postavke</Button></div>
+            <div className="flex justify-end pt-4"><Button size="lg" className="w-full md:w-auto" onClick={handleUpdateSettings}><Save className="mr-2 w-5 h-5" /> Spremi Sve Postavke</Button></div>
           </TabsContent>
         </Tabs>
 
-        {/* MODALS */}
+        {/* MODALS (Forme su ispod) */}
         <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
           <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Program</DialogTitle></DialogHeader>
             <ProgramForm initialData={editingItem} onSave={saveProgram} onCancel={() => setShowProgramModal(false)} />
@@ -536,6 +568,8 @@ const Admin = () => {
   );
 };
 
+// --- FORME ---
+
 const ProgramForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
@@ -557,7 +591,7 @@ const ProgramForm = ({ initialData, onSave, onCancel }) => {
       </div>
       <div><Label>Značajke (svaka u novi red)</Label><Textarea value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} /></div>
       <div className="flex items-center gap-2"><Switch checked={formData.is_active} onCheckedChange={(v) => setFormData({...formData, is_active: v})} /><Label>Aktivan</Label></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
     </form>
   );
 };
@@ -569,7 +603,7 @@ const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
       <div><Label>Naziv Kursa</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
       <div><Label>Program</Label><Select value={formData.program_id} onValueChange={(v) => setFormData({...formData, program_id: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
       <div><Label>Thumbnail URL</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
     </form>
   );
 };
@@ -592,7 +626,7 @@ const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
           required 
         />
       </div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
     </form>
   );
 };
@@ -609,7 +643,7 @@ const ProductForm = ({ initialData, onSave, onCancel }) => {
     <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: parseFloat(formData.price)}); }} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div><Label>Naziv Proizvoda</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
-        <div><Label>Kategorija</Label><Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="E-book, Template..." /></div>
+        <div><Label>Kategorija</Label><Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="npr. tiktok, youtube..." /></div>
       </div>
       <div><Label>Opis Proizvoda</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="h-24" /></div>
       <div><Label>Slika Proizvoda (URL)</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} /></div>
@@ -625,7 +659,7 @@ const FaqForm = ({ initialData, onSave, onCancel }) => {
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
       <div><Label>Pitanje</Label><Input value={formData.question} onChange={(e) => setFormData({...formData, question: e.target.value})} required /></div>
       <div><Label>Odgovor</Label><Textarea value={formData.answer} onChange={(e) => setFormData({...formData, answer: e.target.value})} required /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
     </form>
   );
 };
@@ -636,7 +670,7 @@ const ResultForm = ({ onSave, onCancel }) => {
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
       <div><Label>Image URL</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} required /></div>
       <div><Label>Opis (opciono)</Label><Input value={formData.caption} onChange={(e) => setFormData({...formData, caption: e.target.value})} /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Dodaj</Button></div>
+      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Dodaj</Button></div>
     </form>
   );
 };
