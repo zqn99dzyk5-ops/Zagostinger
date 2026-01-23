@@ -87,19 +87,17 @@ const Home = () => {
   }
 
   return (
-    /* Promijenjeno u bg-transparent da bi se vidio glow iz index.css */
     <div className="min-h-screen bg-transparent">
       {/* HERO SECTION */}
       <section className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 overflow-hidden">
-          {/* Overlay gradijent - blago smanjen opacity (via-background/60) za bolju vidljivost slike */}
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background z-10" />
           
-          {/* BACKGROUND SLIKA - POJAČANA VIDLJIVOST NA 65% (opacity-[0.65]) */}
+          {/* IZBAČEN object-contain: Sada je object-cover na svim uređajima */}
           <img 
             src="https://cdn.discordapp.com/attachments/1449109680805642361/1464146919348506858/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg?ex=69746894&is=69731714&hm=469a212a3fe2cf1ea254632dc73b50d2e8ed0d67ae820b8261771fa9c05aedf2&"
             alt="Background"
-            className="w-full h-full object-contain md:object-cover object-center opacity-[0.65] md:opacity-[0.65]"
+            className="w-full h-full object-cover object-center opacity-[0.65]"
           />
         </div>
         
