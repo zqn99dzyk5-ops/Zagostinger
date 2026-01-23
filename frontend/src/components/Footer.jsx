@@ -1,146 +1,135 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Youtube, MessageCircle, Facebook } from 'lucide-react';
+import { Instagram, Youtube, MessageCircle, Facebook, Mail, Phone } from 'lucide-react';
 import { useSettings } from '../lib/settings';
 
 const Footer = () => {
-  const { settings } = useSettings();
-
-  const socialLinks = settings.social_links || {};
+  const { settings = {} } = useSettings();
 
   return (
-    <footer className="border-t border-white/5 bg-card/50">
+    <footer className="border-t border-white/5 bg-[#050505]">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          {/* Brand */}
+          
+          {/* Brand & Opis */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-6">
-              {settings.logo_url ? (
+              {settings?.logo_url ? (
                 <img 
                   src={settings.logo_url} 
                   alt={settings.site_name || 'Logo'} 
-                  className="h-12 w-auto object-contain"
+                  className="h-10 w-auto object-contain"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-xl gradient-gold flex items-center justify-center">
-                  <span className="text-black font-bold text-xl font-heading">C</span>
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-xl font-heading">
+                    {settings?.site_name?.charAt(0) || 'C'}
+                  </span>
                 </div>
               )}
-              <span className="font-heading text-xl font-semibold">
-                {settings.site_name || 'Continental Academy'}
+              <span className="font-heading text-xl font-bold tracking-tight">
+                {settings?.site_name || 'Continental Academy'}
               </span>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-md">
-              {settings.footer_text || 'Profesionalna online akademija za monetizaciju digitalnog sadržaja. Naučite od najboljih i pretvorite svoju kreativnost u prihod.'}
+              {settings?.footer_text || 'Profesionalna online akademija za razvoj digitalnih veština i monetizaciju sadržaja. Pridruži se stotinama uspešnih studenata.'}
             </p>
           </div>
 
-          {/* Links */}
+          {/* Navigacioni Linkovi */}
           <div>
-            <h4 className="font-heading font-semibold mb-4">Linkovi</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <h4 className="text-foreground font-bold mb-6 uppercase tracking-wider text-xs">Navigacija</h4>
+            <ul className="space-y-4 text-sm text-muted-foreground">
               <li>
-                <Link to="/" className="hover:text-foreground transition-colors">Početna</Link>
+                <Link to="/" className="hover:text-primary transition-colors">Početna</Link>
               </li>
               <li>
-                <a href="/#programs" className="hover:text-foreground transition-colors">Programi</a>
+                <a href="/#programs" className="hover:text-primary transition-colors">Programi</a>
               </li>
               <li>
-                <Link to="/shop" className="hover:text-foreground transition-colors">Shop</Link>
+                <Link to="/shop" className="hover:text-primary transition-colors">Shop</Link>
               </li>
               <li>
-                <a href="/#faq" className="hover:text-foreground transition-colors">FAQ</a>
+                <a href="/#faq" className="hover:text-primary transition-colors">Česta pitanja</a>
               </li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Kontakt & Social */}
           <div>
-            <h4 className="font-heading font-semibold mb-4">Kontakt</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              {settings.contact_email && (
-                <li>
+            <h4 className="text-foreground font-bold mb-6 uppercase tracking-wider text-xs">Kontakt & Social</h4>
+            <ul className="space-y-4 text-sm text-muted-foreground mb-6">
+              {settings?.contact_email && (
+                <li className="flex items-center gap-3">
+                  <Mail className="w-4 h-4 text-primary" />
                   <a href={`mailto:${settings.contact_email}`} className="hover:text-foreground transition-colors">
                     {settings.contact_email}
                   </a>
                 </li>
               )}
-              {settings.contact_phone && (
-                <li>
+              {settings?.contact_phone && (
+                <li className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-primary" />
                   <a href={`tel:${settings.contact_phone}`} className="hover:text-foreground transition-colors">
                     {settings.contact_phone}
                   </a>
                 </li>
               )}
-              {settings.discord_invite_url && (
-                <li>
-                  <a 
-                    href={settings.discord_invite_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Discord zajednica
-                  </a>
-                </li>
-              )}
             </ul>
             
-            {/* Social Links */}
-            <div className="flex gap-4 mt-6">
-              {socialLinks.instagram && (
+            {/* Social Icons - Mapirani na Admin Postavke */}
+            <div className="flex flex-wrap gap-3">
+              {settings?.instagram_url && (
                 <a 
-                  href={socialLinks.instagram}
+                  href={settings.instagram_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                  data-testid="footer-instagram"
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                 >
                   <Instagram className="w-5 h-5" />
                 </a>
               )}
-              {socialLinks.youtube && (
+              {settings?.youtube_url && (
                 <a 
-                  href={socialLinks.youtube}
+                  href={settings.youtube_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                  data-testid="footer-youtube"
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all duration-300"
                 >
                   <Youtube className="w-5 h-5" />
                 </a>
               )}
-              {socialLinks.facebook && (
-                <a 
-                  href={socialLinks.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                  data-testid="footer-facebook"
-                >
-                  <Facebook className="w-5 h-5" />
-                </a>
-              )}
-              {settings.discord_invite_url && (
+              {settings?.discord_invite_url && (
                 <a 
                   href={settings.discord_invite_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                  data-testid="footer-discord"
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#5865F2] hover:text-white transition-all duration-300"
                 >
                   <MessageCircle className="w-5 h-5" />
+                </a>
+              )}
+              {settings?.facebook_url && (
+                <a 
+                  href={settings.facebook_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all duration-300"
+                >
+                  <Facebook className="w-5 h-5" />
                 </a>
               )}
             </div>
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} {settings.site_name || 'Continental Academy'}. Sva prava zadržana.</p>
-          <div className="flex gap-6">
-            <Link to="/privacy" className="hover:text-foreground transition-colors">Privatnost</Link>
-            <Link to="/terms" className="hover:text-foreground transition-colors">Uslovi korištenja</Link>
+        {/* Bottom bar */}
+        <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[13px] text-muted-foreground">
+          <p>
+            &copy; {new Date().getFullYear()} <span className="text-foreground font-medium">{settings?.site_name || 'Continental Academy'}</span>. Sva prava zadržana.
+          </p>
+          <div className="flex gap-8">
+            <Link to="/privacy" className="hover:text-primary transition-colors">Politika privatnosti</Link>
+            <Link to="/terms" className="hover:text-primary transition-colors">Uslovi korišćenja</Link>
           </div>
         </div>
       </div>
