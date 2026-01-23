@@ -1,677 +1,289 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
-  Users, BookOpen, ShoppingBag, Settings, BarChart3, 
-  Plus, Trash2, Edit, Save, Loader2, MessageCircle, 
-  FileText, Image, Video, DollarSign, Palette, GraduationCap,
-  PlayCircle, Clock, ChevronDown, ChevronUp, Eye, EyeOff, X,
-  Link as LinkIcon, Mail, Phone, Globe, Instagram, Youtube, Facebook
+  LayoutDashboard, 
+  BookOpen, 
+  ShoppingBag, 
+  Users, 
+  Settings as SettingsIcon, 
+  Plus, 
+  Trash2, 
+  Edit2, 
+  Save, 
+  DollarSign, 
+  Mail,
+  CheckCircle2,
+  Search
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Switch } from '../components/ui/switch';
-import { Badge } from '../components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../components/ui/table';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '../components/ui/accordion';
 import { 
-  programsAPI, coursesAPI, lessonsAPI, shopAPI, faqsAPI, 
-  resultsAPI, settingsAPI, analyticsAPI, adminAPI 
-} from '../lib/api';
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useSettings } from '@/lib/settings';
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [programs, setPrograms] = useState([]);
+  const { settings, updateSettings } = useSettings();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [loading, setLoading] = useState(false);
+  
+  // State za podatke
   const [courses, setCourses] = useState([]);
   const [products, setProducts] = useState([]);
-  const [faqs, setFaqs] = useState([]);
-  const [results, setResults] = useState([]);
-  const [settings, setSettings] = useState({});
+  const [orders, setOrders] = useState([]); // Svi kupljeni nalozi/kursevi
+  const [stats, setStats] = useState({ totalRevenue: 0, totalSales: 0, activeUsers: 0 });
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Modal states
-  const [showProgramModal, setShowProgramModal] = useState(false);
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [showFaqModal, setShowFaqModal] = useState(false);
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [showCourseModal, setShowCourseModal] = useState(false);
-  const [showLessonModal, setShowLessonModal] = useState(false);
-  const [showUserCoursesModal, setShowUserCoursesModal] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [courseLessons, setCourseLessons] = useState({});
+  // Form states za postavke (prethodno dogovoreno)
+  const [formSettings, setFormSettings] = useState({
+    site_name: settings?.site_name || '',
+    logo_url: settings?.logo_url || '',
+    footer_text: settings?.footer_text || '',
+    contact_email: settings?.contact_email || '',
+    instagram_url: settings?.instagram_url || '',
+    youtube_url: settings?.youtube_url || '',
+    discord_invite_url: settings?.discord_invite_url || '',
+    facebook_url: settings?.facebook_url || '',
+    hero_video_url: settings?.hero_video_url || ''
+  });
 
+  // Simulacija učitavanja podataka (ovdje idu tvoji API pozivi)
   useEffect(() => {
-    loadAllData();
+    const fetchData = async () => {
+      // Ovdje bi išao fetch iz baze
+      // setOrders(fetchedOrders);
+      // setCourses(fetchedCourses);
+    };
+    fetchData();
   }, []);
 
-  const loadAllData = async () => {
+  const handleSettingsSave = async () => {
     setLoading(true);
     try {
-      const [
-        analyticsRes, usersRes, programsRes, coursesRes, 
-        productsRes, faqsRes, resultsRes, settingsRes
-      ] = await Promise.all([
-        analyticsAPI.getStats(),
-        adminAPI.getUsers(),
-        programsAPI.getAll(),
-        coursesAPI.adminGetAll(),
-        shopAPI.getProducts(),
-        faqsAPI.getAll(),
-        resultsAPI.getAll(),
-        settingsAPI.get()
-      ]);
-      
-      setAnalytics(analyticsRes.data);
-      setUsers(usersRes.data);
-      setPrograms(programsRes.data);
-      setCourses(coursesRes.data);
-      setProducts(productsRes.data);
-      setFaqs(faqsRes.data);
-      setResults(resultsRes.data);
-      setSettings(Array.isArray(settingsRes?.data) ? settingsRes.data[0] : (settingsRes?.data || {}));
+      await updateSettings(formSettings);
+      toast.success('Postavke su uspješno sačuvane!');
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Greška pri učitavanju podataka');
+      toast.error('Greška pri čuvanju postavki.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateSettings = async () => {
-    try {
-      await settingsAPI.update(settings);
-      toast.success('Postavke ažurirane');
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (error) {
-      toast.error('Greška pri ažuriranju postavki');
-    }
-  };
-
-  const updateUserRole = async (userId, role) => {
-    try {
-      await adminAPI.updateUserRole(userId, role);
-      setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
-      toast.success('Uloga ažurirana');
-    } catch (error) {
-      toast.error('Greška');
-    }
-  };
-
-  const openUserCoursesModal = async (user) => {
-    setSelectedUser(user);
-    setShowUserCoursesModal(true);
-  };
-
-  const toggleUserCourse = async (courseId, hasAccess) => {
-    if (!selectedUser) return;
-    try {
-      if (hasAccess) {
-        await adminAPI.removeCourseFromUser(selectedUser.id, courseId);
-      } else {
-        await adminAPI.addCourseToUser(selectedUser.id, courseId);
-      }
-      setUsers(users.map(u => {
-        if (u.id === selectedUser.id) {
-          const uCourses = u.courses || [];
-          return {
-            ...u,
-            courses: hasAccess ? uCourses.filter(c => c !== courseId) : [...uCourses, courseId]
-          };
-        }
-        return u;
-      }));
-      setSelectedUser(prev => ({
-        ...prev,
-        courses: hasAccess ? (prev.courses || []).filter(c => c !== courseId) : [...(prev.courses || []), courseId]
-      }));
-      toast.success('Ažurirano');
-    } catch (e) { toast.error('Greška'); }
-  };
-
-  const loadCourseLessons = async (courseId) => {
-    try {
-      const response = await lessonsAPI.getAll(courseId);
-      setCourseLessons(prev => ({ ...prev, [courseId]: response.data }));
-    } catch (e) { console.error(e); }
-  };
-
-  const saveProgram = async (data) => {
-    try {
-      editingItem?.id ? await programsAPI.update(editingItem.id, data) : await programsAPI.create(data);
-      loadAllData(); setShowProgramModal(false); toast.success('Spremljeno');
-    } catch (e) { toast.error('Greška'); }
-  };
-
-  const deleteProgram = async (id) => {
-    if (!confirm('Obrisati program?')) return;
-    try { await programsAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
-  };
-
-  const saveCourse = async (data) => {
-    try {
-      editingItem?.id ? await coursesAPI.update(editingItem.id, data) : await coursesAPI.create(data);
-      loadAllData(); setShowCourseModal(false); toast.success('Kurs spremljen');
-    } catch (e) { toast.error('Greška'); }
-  };
-
-  const deleteCourse = async (id) => {
-    if (!confirm('Obrisati kurs?')) return;
-    try { await coursesAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
-  };
-
-  const saveLesson = async (data) => {
-    try {
-      editingItem?.id ? await lessonsAPI.update(editingItem.id, data) : await lessonsAPI.create(data);
-      if (selectedCourse) loadCourseLessons(selectedCourse.id);
-      setShowLessonModal(false); toast.success('Lekcija spremljena');
-    } catch (e) { toast.error('Greška'); }
-  };
-
-  const deleteLesson = async (lId, cId) => {
-    if (!confirm('Obrisati lekciju?')) return;
-    try { await lessonsAPI.delete(lId); loadCourseLessons(cId); } catch (e) { toast.error('Greška'); }
-  };
-
-  const saveProduct = async (data) => {
-    try {
-      editingItem?.id ? await shopAPI.updateProduct(editingItem.id, data) : await shopAPI.createProduct(data);
-      loadAllData(); setShowProductModal(false); toast.success('Proizvod spremljen');
-    } catch (e) { toast.error('Greška'); }
-  };
-
-  const saveFaq = async (data) => {
-    try {
-      editingItem?.id ? await faqsAPI.update(editingItem.id, data) : await faqsAPI.create(data);
-      loadAllData(); setShowFaqModal(false); toast.success('FAQ spremljen');
-    } catch (e) { toast.error('Greška'); }
-  };
-
-  const deleteFaq = async (id) => {
-    try { await faqsAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
-  };
-
-  const saveResult = async (data) => {
-    try { await resultsAPI.create(data); loadAllData(); setShowResultModal(false); toast.success('Rezultat dodan'); } catch (e) { toast.error('Greška'); }
-  };
-
-  const deleteResult = async (id) => {
-    try { await resultsAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
-  };
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
+  const filteredOrders = orders.filter(order => 
+    order.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.item_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen pt-24 pb-16 bg-background">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="heading-2 mb-2">Admin Panel</h1>
-          <p className="text-muted-foreground">Upravljajte platformom i postavkama</p>
-        </motion.div>
+    <div className="pt-24 pb-12 px-6 lg:px-12 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-heading font-bold text-foreground">Admin Panel</h1>
+          <p className="text-muted-foreground text-sm">Upravljaj akademijom, prodajom i korisnicima.</p>
+        </div>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="bg-card border border-white/5 p-1 rounded-xl flex-wrap h-auto">
-            <TabsTrigger value="overview" className="gap-2"><BarChart3 className="w-4 h-4" /> Pregled</TabsTrigger>
-            <TabsTrigger value="users" className="gap-2"><Users className="w-4 h-4" /> Korisnici</TabsTrigger>
-            <TabsTrigger value="courses" className="gap-2"><GraduationCap className="w-4 h-4" /> Kursevi</TabsTrigger>
-            <TabsTrigger value="programs" className="gap-2"><BookOpen className="w-4 h-4" /> Programi</TabsTrigger>
-            <TabsTrigger value="shop" className="gap-2"><ShoppingBag className="w-4 h-4" /> Shop</TabsTrigger>
-            <TabsTrigger value="content" className="gap-2"><FileText className="w-4 h-4" /> Sadržaj</TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" /> Postavke</TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <TabsList className="bg-card border border-white/5 p-1 rounded-xl overflow-x-auto">
+          <TabsTrigger value="dashboard" className="gap-2"><LayoutDashboard className="w-4 h-4" /> Pregled</TabsTrigger>
+          <TabsTrigger value="sales" className="gap-2"><DollarSign className="w-4 h-4" /> Prodaja</TabsTrigger>
+          <TabsTrigger value="courses" className="gap-2"><BookOpen className="w-4 h-4" /> Kursevi</TabsTrigger>
+          <TabsTrigger value="shop" className="gap-2"><ShoppingBag className="w-4 h-4" /> Shop</TabsTrigger>
+          <TabsTrigger value="settings" className="gap-2"><SettingsIcon className="w-4 h-4" /> Postavke</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-4 gap-6">
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="text-primary" /></div><div><p className="text-2xl font-bold">{analytics?.total_users || 0}</p><p className="text-sm text-muted-foreground">Korisnika</p></div></div></CardContent></Card>
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center"><DollarSign className="text-green-500" /></div><div><p className="text-2xl font-bold">{analytics?.total_subscriptions || 0}</p><p className="text-sm text-muted-foreground">Pretplata</p></div></div></CardContent></Card>
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><GraduationCap className="text-blue-500" /></div><div><p className="text-2xl font-bold">{courses.length}</p><p className="text-sm text-muted-foreground">Kurseva</p></div></div></CardContent></Card>
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center"><BookOpen className="text-purple-500" /></div><div><p className="text-2xl font-bold">{programs.length}</p><p className="text-sm text-muted-foreground">Programa</p></div></div></CardContent></Card>
-            </div>
-          </TabsContent>
-
-          {/* Korisnici Tab */}
-          <TabsContent value="users">
-            <Card className="luxury-card">
-              <CardHeader><CardTitle>Upravljanje korisnicima</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Ime</TableHead><TableHead>Email</TableHead><TableHead>Uloga</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>{user.name}</TableCell><TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          <Select value={user.role} onValueChange={(v) => updateUserRole(user.id, v)}>
-                            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell><Button variant="outline" size="sm" onClick={() => openUserCoursesModal(user)}>Kursevi</Button></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Kursevi Tab */}
-          <TabsContent value="courses">
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Kursevi i Lekcije</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowCourseModal(true); }}><Plus className="w-4 h-4" /> Novi Kurs</Button>
+        {/* DASHBOARD PREGLED */}
+        <TabsContent value="dashboard">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Ukupna Zarada</CardDescription>
+                <CardTitle className="text-3xl">€{stats.totalRevenue}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Accordion type="multiple" className="space-y-4">
-                  {courses.map((course) => (
-                    <AccordionItem key={course.id} value={course.id} className="border-white/10">
-                      <AccordionTrigger className="hover:no-underline px-4" onClick={() => !courseLessons[course.id] && loadCourseLessons(course.id)}>
-                        <div className="flex items-center justify-between w-full pr-4">
-                          <span>{course.title} <Badge variant="outline" className="ml-2">{course.program_name}</Badge></span>
-                          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(course); setShowCourseModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => deleteCourse(course.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4">
-                        <Button size="sm" className="mb-4" onClick={() => { setSelectedCourse(course); setEditingItem(null); setShowLessonModal(true); }}><Plus className="w-4 h-4" /> Dodaj Lekciju</Button>
-                        <div className="space-y-2">
-                          {courseLessons[course.id]?.map((lesson) => (
-                            <div key={lesson.id} className="flex justify-between p-3 bg-white/5 rounded-lg">
-                              <span>{lesson.title}</span>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => { setSelectedCourse(course); setEditingItem(lesson); setShowLessonModal(true); }}><Edit className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="sm" onClick={() => deleteLesson(lesson.id, course.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Programi Tab */}
-          <TabsContent value="programs">
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Programi</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowProgramModal(true); }}><Plus className="w-4 h-4" /> Novi Program</Button>
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Broj Prodaja</CardDescription>
+                <CardTitle className="text-3xl">{stats.totalSales}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Naziv</TableHead><TableHead>Cijena</TableHead><TableHead>Status</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {programs.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium">{p.name}</TableCell>
-                        <TableCell>€{p.price}</TableCell>
-                        <TableCell><Badge variant={p.is_active ? "default" : "destructive"}>{p.is_active ? "Aktivan" : "Neaktivan"}</Badge></TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(p); setShowProgramModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => deleteProgram(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
             </Card>
-          </TabsContent>
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardDescription>Aktivni Korisnici</CardDescription>
+                <CardTitle className="text-3xl">{stats.activeUsers}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+        </TabsContent>
 
-          {/* Shop Tab */}
-          <TabsContent value="shop">
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Shop Proizvodi</CardTitle>
-                  <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }}>
-                  <Plus className="w-4 h-4 mr-2" /> Novi Proizvod
-                </Button>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                  <TableHeader>
-                    <TableRow>
-                    <TableHead className="w-20">Slika</TableHead>
-                    <TableHead>Naziv i Opis</TableHead>
-                    <TableHead>Kategorija</TableHead>
-                    <TableHead>Cijena</TableHead>
-                    <TableHead className="text-right">Akcije</TableHead>
+        {/* PRODAJA I NALOZI (Ovdje vidiš ko je kupio) */}
+        <TabsContent value="sales">
+          <Card className="glass-card border-white/5">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Lista Kupaca & Naloga</CardTitle>
+                <CardDescription>Pregled svih uspješnih transakcija i aktiviranih pristupa.</CardDescription>
+              </div>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Traži po emailu..." 
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/5 hover:bg-transparent">
+                    <TableHead>Datum</TableHead>
+                    <TableHead>Kupac (Email)</TableHead>
+                    <TableHead>Proizvod / Kurs</TableHead>
+                    <TableHead>Iznos</TableHead>
+                    <TableHead>Status Mail-a</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOrders.length > 0 ? filteredOrders.map((order) => (
+                    <TableRow key={order.id} className="border-white/5">
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(order.created_at).toLocaleDateString('de-DE')}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3 h-3 text-primary" />
+                          {order.user_email}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                          {order.item_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-bold text-foreground">€{order.amount}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-green-500 text-xs">
+                          <CheckCircle2 className="w-3 h-3" /> Poslato
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((prod) => (
-                      <TableRow key={prod.id} className="group">
-                        <TableCell>
-                          <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden border border-white/5">
-                            <img src={prod.image_url} alt="" className="w-full h-full object-cover" />
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-bold">{prod.name}</span>
-                            <span className="text-xs text-muted-foreground line-clamp-1">{prod.description}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 capitalize">
-                            {prod.category || 'Bez kategorije'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-semibold">€{prod.price}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati proizvod?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}>
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                        Nema pronađenih prodaja.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Sadržaj Tab */}
-          <TabsContent value="content" className="space-y-6">
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>FAQ</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowFaqModal(true); }}><Plus className="w-4 h-4" /> Novo Pitanje</Button>
+        {/* POSTAVKE SAJTA */}
+        <TabsContent value="settings">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="glass-card border-white/5">
+              <CardHeader>
+                <CardTitle>Osnovne Informacije</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {faqs.map((f) => (
-                  <div key={f.id} className="flex justify-between p-4 bg-white/5 rounded-lg border border-white/5">
-                    <div><p className="font-medium">{f.question}</p></div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingItem(f); setShowFaqModal(true); }}><Edit className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteFaq(f.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                    </div>
-                  </div>
-                ))}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Naziv Sajta</label>
+                  <Input 
+                    value={formSettings.site_name} 
+                    onChange={(e) => setFormSettings({...formSettings, site_name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Logo URL</label>
+                  <Input 
+                    value={formSettings.logo_url} 
+                    onChange={(e) => setFormSettings({...formSettings, logo_url: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Hero Video URL (MP4)</label>
+                  <Input 
+                    value={formSettings.hero_video_url} 
+                    onChange={(e) => setFormSettings({...formSettings, hero_video_url: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Footer Tekst</label>
+                  <Textarea 
+                    value={formSettings.footer_text} 
+                    onChange={(e) => setFormSettings({...formSettings, footer_text: e.target.value})}
+                  />
+                </div>
               </CardContent>
             </Card>
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Rezultati</CardTitle><Button onClick={() => setShowResultModal(true)}><Plus className="w-4 h-4" /> Dodaj</Button></CardHeader>
-              <CardContent><div className="grid grid-cols-4 gap-4">
-                {results.map((r) => (
-                  <div key={r.id} className="relative group"><img src={r.image_url} className="w-full aspect-square object-cover rounded-lg" /><Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => deleteResult(r.id)}><Trash2 className="w-4 h-4" /></Button></div>
-                ))}
-              </div></CardContent>
+
+            <Card className="glass-card border-white/5">
+              <CardHeader>
+                <CardTitle>Socijalne Mreže & Kontakt</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Kontakt Email</label>
+                  <Input 
+                    value={formSettings.contact_email} 
+                    onChange={(e) => setFormSettings({...formSettings, contact_email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Instagram URL</label>
+                  <Input 
+                    value={formSettings.instagram_url} 
+                    onChange={(e) => setFormSettings({...formSettings, instagram_url: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">YouTube URL</label>
+                  <Input 
+                    value={formSettings.youtube_url} 
+                    onChange={(e) => setFormSettings({...formSettings, youtube_url: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Discord Invite</label>
+                  <Input 
+                    value={formSettings.discord_invite_url} 
+                    onChange={(e) => setFormSettings({...formSettings, discord_invite_url: e.target.value})}
+                  />
+                </div>
+              </CardContent>
+              <div className="p-6 pt-0">
+                <Button 
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={handleSettingsSave}
+                  disabled={loading}
+                >
+                  {loading ? 'Spremanje...' : 'Sačuvaj Sve Postavke'}
+                </Button>
+              </div>
             </Card>
-          </TabsContent>
-
-          {/* Postavke Tab (Gde su Linkovi) */}
-          <TabsContent value="settings" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Palette className="w-5 h-5" /> Branding</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div><Label>Naziv Sajta</Label><Input value={settings.site_name || ''} onChange={(e) => setSettings({...settings, site_name: e.target.value})} /></div>
-                  <div><Label>Logo URL</Label><Input value={settings.logo_url || ''} onChange={(e) => setSettings({...settings, logo_url: e.target.value})} /></div>
-                  <div><Label>Favicon URL</Label><Input value={settings.favicon_url || ''} onChange={(e) => setSettings({...settings, favicon_url: e.target.value})} /></div>
-                </CardContent>
-              </Card>
-
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Hero & Media (Mux)</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Hero Video Mux Playback ID</Label>
-                    <Input 
-                      placeholder="Npr: d02K3as..." 
-                      value={settings.hero_video_url || ''} 
-                      onChange={(e) => setSettings({...settings, hero_video_url: e.target.value})} 
-                    />
-                  </div>
-                  <div><Label>Headline</Label><Input value={settings.hero_headline || ''} onChange={(e) => setSettings({...settings, hero_headline: e.target.value})} /></div>
-                  <div><Label>Subheadline</Label><Textarea value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
-                </CardContent>
-              </Card>
-
-              {/* VRACENE OPCIJE ZA LINKOVE */}
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Social Media Links</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Instagram className="w-4 h-4 text-pink-500" /> Instagram URL</Label>
-                    <Input placeholder="https://instagram.com/vasprofil" value={settings.instagram_url || ''} onChange={(e) => setSettings({...settings, instagram_url: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Youtube className="w-4 h-4 text-red-500" /> YouTube URL</Label>
-                    <Input placeholder="https://youtube.com/@vaskanal" value={settings.youtube_url || ''} onChange={(e) => setSettings({...settings, youtube_url: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-indigo-500" /> Discord Invite URL</Label>
-                    <Input placeholder="https://discord.gg/invite" value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Facebook className="w-4 h-4 text-blue-600" /> Facebook URL</Label>
-                    <Input placeholder="https://facebook.com/vasafanstrana" value={settings.facebook_url || ''} onChange={(e) => setSettings({...settings, facebook_url: e.target.value})} />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5" /> Contact Info</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div><Label>Contact Email</Label><Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} /></div>
-                  <div><Label>Contact Phone (opciono)</Label><Input value={settings.contact_phone || ''} onChange={(e) => setSettings({...settings, contact_phone: e.target.value})} /></div>
-                </CardContent>
-              </Card>
-
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5" /> Vidljivost Sekcija</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between"><Label>Prikaži Rezultate</Label><Switch checked={settings.show_results_section} onCheckedChange={(v) => setSettings({...settings, show_results_section: v})} /></div>
-                  <div className="flex items-center justify-between"><Label>Prikaži FAQ</Label><Switch checked={settings.show_faq_section} onCheckedChange={(v) => setSettings({...settings, show_faq_section: v})} /></div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="flex justify-end pt-4"><Button size="lg" className="w-full md:w-auto" onClick={handleUpdateSettings}><Save className="mr-2 w-5 h-5" /> Spremi Sve Postavke</Button></div>
-          </TabsContent>
-        </Tabs>
-
-        {/* MODALS (Forme su ispod) */}
-        <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Program</DialogTitle></DialogHeader>
-            <ProgramForm initialData={editingItem} onSave={saveProgram} onCancel={() => setShowProgramModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Kurs</DialogTitle></DialogHeader>
-            <CourseForm initialData={editingItem} programs={programs} onSave={saveCourse} onCancel={() => setShowCourseModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showLessonModal} onOpenChange={setShowLessonModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Lekcija (Mux Video)</DialogTitle></DialogHeader>
-            <LessonForm initialData={editingItem} courseId={selectedCourse?.id} onSave={saveLesson} onCancel={() => setShowLessonModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Proizvod</DialogTitle></DialogHeader>
-            <ProductForm initialData={editingItem} onSave={saveProduct} onCancel={() => setShowProductModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showFaqModal} onOpenChange={setShowFaqModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>FAQ</DialogTitle></DialogHeader>
-            <FaqForm initialData={editingItem} onSave={saveFaq} onCancel={() => setShowFaqModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Dodaj Rezultat</DialogTitle></DialogHeader>
-            <ResultForm onSave={saveResult} onCancel={() => setShowResultModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showUserCoursesModal} onOpenChange={setShowUserCoursesModal}>
-          <DialogContent className="bg-card border-white/10 max-w-lg">
-            <DialogHeader><DialogTitle>Kursevi korisnika</DialogTitle><DialogDescription>{selectedUser?.name}</DialogDescription></DialogHeader>
-            <div className="space-y-2 max-h-96 overflow-y-auto mt-4">
-              {courses.map((c) => {
-                const access = selectedUser?.courses?.includes(c.id);
-                return (
-                  <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                    <span>{c.title}</span><Switch checked={access} onCheckedChange={() => toggleUserCourse(c.id, access)} />
-                  </div>
-                );
-              })}
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
-};
-
-// --- FORME ---
-
-const ProgramForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    price: initialData?.price || 0,
-    currency: initialData?.currency || 'EUR',
-    thumbnail_url: initialData?.thumbnail_url || '',
-    features: initialData?.features?.join('\n') || '',
-    is_active: initialData?.is_active !== false
-  });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: parseFloat(formData.price), features: formData.features.split('\n').filter(f => f.trim())}); }} className="space-y-4">
-      <div><Label>Naziv</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
-      <div><Label>Opis</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required /></div>
-      <div><Label>Thumbnail URL (Slika)</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Cijena</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
-        <div><Label>Valuta</Label><Input value={formData.currency} disabled /></div>
-      </div>
-      <div><Label>Značajke (svaka u novi red)</Label><Textarea value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} /></div>
-      <div className="flex items-center gap-2"><Switch checked={formData.is_active} onCheckedChange={(v) => setFormData({...formData, is_active: v})} /><Label>Aktivan</Label></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
-    </form>
-  );
-};
-
-const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ title: initialData?.title || '', program_id: initialData?.program_id || '', thumbnail_url: initialData?.thumbnail_url || '' });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naziv Kursa</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-      <div><Label>Program</Label><Select value={formData.program_id} onValueChange={(v) => setFormData({...formData, program_id: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-      <div><Label>Thumbnail URL</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
-    </form>
-  );
-};
-
-const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ 
-    title: initialData?.title || '', 
-    video_url: initialData?.video_url || '', 
-    course_id: courseId 
-  });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naslov Lekcije</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-      <div>
-        <Label>Mux Playback ID</Label>
-        <Input 
-          placeholder="Unesi Playback ID sa Mux-a" 
-          value={formData.video_url} 
-          onChange={(e) => setFormData({...formData, video_url: e.target.value})} 
-          required 
-        />
-      </div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
-    </form>
-  );
-};
-
-const ProductForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ 
-    name: initialData?.name || '', 
-    description: initialData?.description || '',
-    price: initialData?.price || 0,
-    image_url: initialData?.image_url || '', 
-    category: initialData?.category || ''   
-  });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: parseFloat(formData.price)}); }} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Naziv Proizvoda</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
-        <div><Label>Kategorija</Label><Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="npr. tiktok, youtube..." /></div>
-      </div>
-      <div><Label>Opis Proizvoda</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="h-24" /></div>
-      <div><Label>Slika Proizvoda (URL)</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} /></div>
-      <div><Label>Cijena (€)</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
-      <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi Proizvod</Button></div>
-    </form>
-  );
-};
-
-const FaqForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ question: initialData?.question || '', answer: initialData?.answer || '' });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Pitanje</Label><Input value={formData.question} onChange={(e) => setFormData({...formData, question: e.target.value})} required /></div>
-      <div><Label>Odgovor</Label><Textarea value={formData.answer} onChange={(e) => setFormData({...formData, answer: e.target.value})} required /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
-    </form>
-  );
-};
-
-const ResultForm = ({ onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ image_url: '', caption: '' });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Image URL</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} required /></div>
-      <div><Label>Opis (opciono)</Label><Input value={formData.caption} onChange={(e) => setFormData({...formData, caption: e.target.value})} /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Dodaj</Button></div>
-    </form>
   );
 };
 
