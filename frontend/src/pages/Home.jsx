@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Play, ChevronRight, BookOpen, Users, MessageCircle, 
-  TrendingUp, Check, ChevronDown
+  TrendingUp, Check
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
@@ -97,108 +97,110 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent">
-      {/* HERO SECTION - Popravljen tag koji je falio */}
-      <section className="relative min-h-screen flex items-center pt-20">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background z-10" />
+    <div className="min-h-screen bg-background">
+      
+      {/* NOVI HERO SECTION */}
+      <section className="flex flex-col w-full">
+        
+        {/* 1. DEO: SLIKA (Potpuno čista, bez teksta preko, bez blura) */}
+        <div className="w-full h-[50vh] lg:h-[60vh] overflow-hidden bg-background">
           <img 
             src="https://i.ibb.co/671phtBt/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"
-            alt="Background"
-            className="w-full h-full object-cover object-center opacity-[0.65]"
+            alt="Hero Background"
+            className="w-full h-full object-cover object-center" 
           />
         </div>
-        
-        <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-12 py-24 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <motion.div {...fadeUp} className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-sm text-primary font-medium">Continental Academy</span>
-              </div>
+
+        {/* 2. DEO: TEXT I VIDEO (Povučeno ispod slike) */}
+        <div className="w-full py-16 lg:py-24 bg-background">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               
-              <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight">
-                {settings.hero_headline || 'Monetizuj svoj sadržaj. Pretvori znanje u prihod.'}
-              </h1>
-              
-              <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
-                {settings.hero_subheadline || 'Nauči kako da zaradiš na TikTok, YouTube i Facebook platformama sa našim ekspertnim vodičima.'}
-              </p>
-              
-              <div className="flex flex-wrap gap-4">
-                <Link to={user ? "/dashboard" : "/register"}>
-                  <Button 
-                    size="lg" 
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 shadow-lg shadow-primary/20"
-                  >
-                    Započni edukaciju
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <a href="#programs">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="rounded-full px-8 border-white/10 hover:bg-white/5"
-                  >
-                    Pogledaj programe
-                  </Button>
-                </a>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="aspect-video rounded-2xl overflow-hidden bg-card border border-white/5 shadow-2xl">
-                {settings.hero_video_url ? (
-                  <video 
-                    src={settings.hero_video_url} 
-                    controls 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-card">
-                    <div className="text-center space-y-4">
-                      <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
-                        <Play className="w-8 h-8 text-primary" />
-                      </div>
-                      <p className="text-muted-foreground">Video dolazi uskoro</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="absolute -bottom-6 -left-6 bg-background/80 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">1,500+</p>
-                    <p className="text-sm text-muted-foreground">Aktivnih studenata</p>
-                  </div>
+              {/* Leva strana: Tekst */}
+              <motion.div {...fadeUp} className="space-y-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-sm text-primary font-medium">Continental Academy</span>
+                </div>
+                
+                <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
+                  {settings.hero_headline || 'Monetizuj svoj sadržaj. Pretvori znanje u prihod.'}
+                </h1>
+                
+                <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
+                  {settings.hero_subheadline || 'Nauči kako da zaradiš na TikTok, YouTube i Facebook platformama sa našim ekspertnim vodičima.'}
+                </p>
+                
+                <div className="flex flex-wrap gap-4">
+                  <Link to={user ? "/dashboard" : "/register"}>
+                    <Button 
+                      size="lg" 
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 shadow-lg shadow-primary/20"
+                    >
+                      Započni edukaciju
+                      <ChevronRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                  <a href="#programs">
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="rounded-full px-8"
+                    >
+                      Pogledaj programe
+                    </Button>
+                  </a>
                 </div>
               </motion.div>
-            </motion.div>
+              
+              {/* Desna strana: Video */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="relative"
+              >
+                <div className="aspect-video rounded-2xl overflow-hidden bg-card border border-border shadow-2xl">
+                  {settings.hero_video_url ? (
+                    <video 
+                      src={settings.hero_video_url} 
+                      controls 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-card">
+                      <div className="text-center space-y-4">
+                        <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+                          <Play className="w-8 h-8 text-primary" />
+                        </div>
+                        <p className="text-muted-foreground">Video dolazi uskoro</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Floating Stats Card (ispod videa) */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="absolute -bottom-6 -left-6 bg-background/95 backdrop-blur-md border border-border rounded-xl p-4 shadow-xl"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">450+</p>
+                      <p className="text-sm text-muted-foreground">Aktivnih studenata</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+
+            </div>
           </div>
         </div>
-        
-        <motion.div 
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
-        >
-          <ChevronDown className="w-6 h-6 text-muted-foreground" />
-        </motion.div>
       </section>
   
       {/* WHY US SECTION */}
