@@ -41,10 +41,10 @@ const Home = () => {
         setFaqs(Array.isArray(faqsRes?.data) ? faqsRes.data : []);
         setResults(Array.isArray(resultsRes?.data) ? resultsRes.data : []);
 
-        const settingsData = settingsRes?.data;
-        setSettings(Array.isArray(settingsData) ? settingsData[0] : (settingsData || {}));
+        const settingsData = Array.isArray(settingsRes?.data) ? settingsRes.data[0] : (settingsRes?.data || {});
+        setSettings(settingsData);
         
-        if (settingsData.favicon_url) {
+        if (settingsData?.favicon_url) {
           let link = document.querySelector("link[rel~='icon']");
           if (!link) {
             link = document.createElement('link');
@@ -52,7 +52,8 @@ const Home = () => {
             document.getElementsByTagName('head')[0].appendChild(link);
           }
           link.href = settingsData.favicon_url;
-      }
+        }
+
         if (analyticsAPI?.trackEvent) {
           analyticsAPI.trackEvent({ event_type: 'page_view', page: 'home', metadata: {} });
         }
@@ -97,19 +98,16 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-{/* BACKGROUND SLIKA SEKCIJA */}
-  <div className="absolute inset-0 overflow-hidden">
-    {/* Overlay gradijent - daje onaj tamni šmek da se tekst vidi */}
-    <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background z-10" />
-  
-    {/* Slika koja se sada rasteže na svim uređajima */}
-    <img 
-      src="https://i.ibb.co/671phtBt/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"
-      alt="Background"
-      className="w-full h-full object-cover object-center opacity-[0.65]"
-    />
-  </div>
-
+      {/* HERO SECTION - Popravljen tag koji je falio */}
+      <section className="relative min-h-screen flex items-center pt-20">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background z-10" />
+          <img 
+            src="https://i.ibb.co/671phtBt/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"
+            alt="Background"
+            className="w-full h-full object-cover object-center opacity-[0.65]"
+          />
+        </div>
         
         <div className="relative z-20 max-w-7xl mx-auto px-6 lg:px-12 py-24 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
