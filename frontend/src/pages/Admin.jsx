@@ -96,7 +96,7 @@ const Admin = () => {
       setProducts(productsRes.data);
       setFaqs(faqsRes.data);
       setResults(resultsRes.data);
-      setSettings(settingsRes.data);
+      setSettings(Array.isArray(settingsRes?.data) ? settingsRes.data[0] : (settingsRes?.data || {}));
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Greška pri učitavanju podataka');
@@ -105,7 +105,6 @@ const Admin = () => {
     }
   };
 
-  // --- SETTINGS LOGIC ---
   const handleUpdateSettings = async () => {
     try {
       await settingsAPI.update(settings);
@@ -116,7 +115,6 @@ const Admin = () => {
     }
   };
 
-  // --- USER LOGIC ---
   const updateUserRole = async (userId, role) => {
     try {
       await adminAPI.updateUserRole(userId, role);
@@ -158,7 +156,6 @@ const Admin = () => {
     } catch (e) { toast.error('Greška'); }
   };
 
-  // --- PROGRAMS & COURSES LOGIC ---
   const loadCourseLessons = async (courseId) => {
     try {
       const response = await lessonsAPI.getAll(courseId);
@@ -203,7 +200,6 @@ const Admin = () => {
     try { await lessonsAPI.delete(lId); loadCourseLessons(cId); } catch (e) { toast.error('Greška'); }
   };
 
-  // --- SHOP & CONTENT LOGIC ---
   const saveProduct = async (data) => {
     try {
       editingItem?.id ? await shopAPI.updateProduct(editingItem.id, data) : await shopAPI.createProduct(data);
@@ -251,7 +247,6 @@ const Admin = () => {
             <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" /> Postavke</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid md:grid-cols-4 gap-6">
               <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="text-primary" /></div><div><p className="text-2xl font-bold">{analytics?.total_users || 0}</p><p className="text-sm text-muted-foreground">Korisnika</p></div></div></CardContent></Card>
@@ -261,7 +256,6 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          {/* Users Tab */}
           <TabsContent value="users">
             <Card className="luxury-card">
               <CardHeader><CardTitle>Upravljanje korisnicima</CardTitle></CardHeader>
@@ -287,7 +281,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Courses & Lessons Tab */}
           <TabsContent value="courses">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -328,7 +321,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Programs Tab */}
           <TabsContent value="programs">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -358,8 +350,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Shop Tab */}
-        <TabsContent value="shop">
+          <TabsContent value="shop">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Shop Proizvodi</CardTitle>
@@ -416,8 +407,6 @@ const Admin = () => {
   </Card>
 </TabsContent>
 
-
-          {/* Content (FAQ & Results) */}
           <TabsContent value="content" className="space-y-6">
             <Card className="luxury-card">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -446,7 +435,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Settings Tab - SA SVIM POLJIMA */}
           <TabsContent value="settings" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="luxury-card">
@@ -455,13 +443,19 @@ const Admin = () => {
                   <div><Label>Naziv Sajta</Label><Input value={settings.site_name || ''} onChange={(e) => setSettings({...settings, site_name: e.target.value})} /></div>
                   <div><Label>Logo URL</Label><Input value={settings.logo_url || ''} onChange={(e) => setSettings({...settings, logo_url: e.target.value})} /></div>
                   <div><Label>Favicon URL</Label><Input value={settings.favicon_url || ''} onChange={(e) => setSettings({...settings, favicon_url: e.target.value})} /></div>
-                  <div><Label>Tema</Label><Select value={settings.theme} onValueChange={(v) => setSettings({...settings, theme: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="dark-luxury">Dark Luxury</SelectItem><SelectItem value="gold">Gold</SelectItem></SelectContent></Select></div>
                 </CardContent>
               </Card>
               <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Hero & Media</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Hero & Media (Mux)</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div><Label>Hero Video URL</Label><Input value={settings.hero_video_url || ''} onChange={(e) => setSettings({...settings, hero_video_url: e.target.value})} /></div>
+                  <div>
+                    <Label>Hero Video Mux Playback ID</Label>
+                    <Input 
+                      placeholder="Npr: d02K3as..." 
+                      value={settings.hero_video_url || ''} 
+                      onChange={(e) => setSettings({...settings, hero_video_url: e.target.value})} 
+                    />
+                  </div>
                   <div><Label>Headline</Label><Input value={settings.hero_headline || ''} onChange={(e) => setSettings({...settings, hero_headline: e.target.value})} /></div>
                   <div><Label>Subheadline</Label><Textarea value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
                 </CardContent>
@@ -471,7 +465,6 @@ const Admin = () => {
                 <CardContent className="space-y-4">
                   <div><Label>Discord Link</Label><Input value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} /></div>
                   <div><Label>Contact Email</Label><Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} /></div>
-                  <div><Label>Footer Text</Label><Input value={settings.footer_text || ''} onChange={(e) => setSettings({...settings, footer_text: e.target.value})} /></div>
                 </CardContent>
               </Card>
               <Card className="luxury-card">
@@ -500,7 +493,7 @@ const Admin = () => {
         </Dialog>
 
         <Dialog open={showLessonModal} onOpenChange={setShowLessonModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Lekcija</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Lekcija (Mux Video)</DialogTitle></DialogHeader>
             <LessonForm initialData={editingItem} courseId={selectedCourse?.id} onSave={saveLesson} onCancel={() => setShowLessonModal(false)} />
           </DialogContent>
         </Dialog>
@@ -543,7 +536,6 @@ const Admin = () => {
   );
 };
 
-// --- FORM COMPONENTS ---
 const ProgramForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
@@ -583,11 +575,23 @@ const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
 };
 
 const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ title: initialData?.title || '', video_url: initialData?.video_url || '', course_id: courseId });
+  const [formData, setFormData] = useState({ 
+    title: initialData?.title || '', 
+    video_url: initialData?.video_url || '', 
+    course_id: courseId 
+  });
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
       <div><Label>Naslov Lekcije</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-      <div><Label>Video URL</Label><Input value={formData.video_url} onChange={(e) => setFormData({...formData, video_url: e.target.value})} required /></div>
+      <div>
+        <Label>Mux Playback ID</Label>
+        <Input 
+          placeholder="Unesi Playback ID sa Mux-a" 
+          value={formData.video_url} 
+          onChange={(e) => setFormData({...formData, video_url: e.target.value})} 
+          required 
+        />
+      </div>
       <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
     </form>
   );
@@ -596,52 +600,21 @@ const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
 const ProductForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({ 
     name: initialData?.name || '', 
-    description: initialData?.description || '', // DODANO: Opis proizvoda
+    description: initialData?.description || '',
     price: initialData?.price || 0,
     image_url: initialData?.image_url || '', 
     category: initialData?.category || ''   
   });
-
   return (
-    <form onSubmit={(e) => { 
-      e.preventDefault(); 
-      onSave({...formData, price: parseFloat(formData.price)}); 
-    }} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: parseFloat(formData.price)}); }} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Naziv Proizvoda</Label>
-          <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
-        </div>
-        <div>
-          <Label>Kategorija</Label>
-          <Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="E-book, Template..." />
-        </div>
+        <div><Label>Naziv Proizvoda</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
+        <div><Label>Kategorija</Label><Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="E-book, Template..." /></div>
       </div>
-
-      <div>
-        <Label>Opis Proizvoda</Label>
-        <Textarea 
-          value={formData.description} 
-          onChange={(e) => setFormData({...formData, description: e.target.value})} 
-          placeholder="Napišite kratak opis šta kupac dobija..."
-          className="h-24"
-        />
-      </div>
-
-      <div>
-        <Label>Slika Proizvoda (URL)</Label>
-        <Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} placeholder="https://..." />
-      </div>
-
-      <div>
-        <Label>Cijena (€)</Label>
-        <Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required />
-      </div>
-
-      <div className="flex gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button>
-        <Button type="submit" className="flex-1">Spremi Proizvod</Button>
-      </div>
+      <div><Label>Opis Proizvoda</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="h-24" /></div>
+      <div><Label>Slika Proizvoda (URL)</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} /></div>
+      <div><Label>Cijena (€)</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
+      <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi Proizvod</Button></div>
     </form>
   );
 };
