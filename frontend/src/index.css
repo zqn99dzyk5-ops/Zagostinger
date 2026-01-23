@@ -105,7 +105,8 @@
   }
 }
 
-@@layer base {
+/* POPRAVLJENO: Ovdje je bio typo @@layer */
+@layer base {
   * {
     @apply border-border;
   }
@@ -118,11 +119,13 @@
     @apply text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
     position: relative;
-    background: #0a0a0c;
+    /* POPRAVLJENO: Koristi theme varijablu umjesto hardkodirane boje */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
   
   /* Orange & Pink glow effect for dark theme */
-  [data-theme=\"dark-luxury\"] body::before,
+  [data-theme="dark-luxury"] body::before,
   :root body::before {
     content: '';
     position: fixed;
@@ -136,13 +139,20 @@
       radial-gradient(ellipse 70% 60% at 100% 100%, rgba(255, 80, 50, 0.18) 0%, transparent 50%),
       radial-gradient(ellipse 70% 60% at 0% 100%, rgba(255, 80, 150, 0.15) 0%, transparent 50%);
     pointer-events: none;
-    z-index: 0;
+    /* POPRAVLJENO: z-index -1 da ide iza sadrzaja */
+    z-index: -1;
+  }
+
+  /* POPRAVLJENO: Sakrij glow na svijetlim temama da ne izgleda prljavo */
+  [data-theme="clean-light"] body::before,
+  [data-theme="education-classic"] body::before {
+    display: none;
+    content: none;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
   }
-
 }
 
 @layer utilities {
