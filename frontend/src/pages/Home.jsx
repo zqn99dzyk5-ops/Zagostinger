@@ -101,7 +101,7 @@ const Home = () => {
             /* Na mobilnom (ispod 'md' brejkpointa) koristimo object-contain da se vidi CIJELA slika.
                Na desktopu (md:) koristimo object-cover da popuni ekran.
             */
-            className="w-full h-full object-contain md:object-cover object-center opacity-40 md:opacity-20"
+            className="w-full h-full object-contain md:object-cover object-center opacity-50 md:opacity-50"
           />
         </div>
         
