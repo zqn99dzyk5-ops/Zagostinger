@@ -20,13 +20,13 @@ import { toast } from 'sonner';
 const Home = () => {
   const [programs, setPrograms] = useState([]);
   const [faqs, setFaqs] = useState([]);
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState([]); // Ispravljeno: setResults
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-    useEffect(() => {
+  useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
@@ -37,12 +37,10 @@ const Home = () => {
           settingsAPI.get()
         ]);
         
-        // POPRAVKA: Uklonjen suvišni .data jer API vraća niz direktno
         setPrograms(Array.isArray(programsRes?.data) ? programsRes.data : []);
         setFaqs(Array.isArray(faqsRes?.data) ? faqsRes.data : []);
         setResults(Array.isArray(resultsRes?.data) ? resultsRes.data : []);
 
-        // Za settings: ako API vraća niz, uzmi prvi objekt, inače uzmi sam objekt
         const settingsData = settingsRes?.data;
         setSettings(Array.isArray(settingsData) ? settingsData[0] : (settingsData || {}));
 
@@ -58,7 +56,6 @@ const Home = () => {
     };
     loadData();
   }, []);
-
 
   const handleSubscribe = async (programId) => {
     if (!user) {
@@ -91,14 +88,20 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* HERO SECTION */}
       <section className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background z-10" />
+          {/* Overlay gradijent */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background z-10" />
+          
+          {/* BACKGROUND SLIKA - POPRAVKA ZA MOBILNI */}
           <img 
             src="https://images.unsplash.com/photo-1684488624316-774ea1824d97?auto=format&fit=crop&q=80"
             alt="Background"
-            className="w-full h-full object-cover opacity-20"
+            /* Na mobilnom (ispod 'md' brejkpointa) koristimo object-contain da se vidi CIJELA slika.
+               Na desktopu (md:) koristimo object-cover da popuni ekran.
+            */
+            className="w-full h-full object-contain md:object-cover object-center opacity-40 md:opacity-20"
           />
         </div>
         
@@ -194,159 +197,154 @@ const Home = () => {
         </motion.div>
       </section>
   
-      {/* Why Us Section */}
-  <section className="py-24 bg-background relative overflow-hidden">
-    <div className="max-w-7xl mx-auto px-6 lg:px-12">
-      <div className="text-center mb-16">
-        <span className="text-primary font-semibold tracking-wider uppercase text-sm">Prednosti</span>
-        <h2 className="text-4xl font-bold mt-4">Zašto baš Continental Academy?</h2>
-      </div>
-
-    <div className="grid md:grid-cols-3 gap-8">
-      {[
-        {
-          icon: <TrendingUp className="w-8 h-8 text-primary" />,
-          title: "Dokazane Strategije",
-          desc: "Naše metode nisu teorija, već sistemi koji trenutno donose profit na tržištu."
-        },
-        {
-          icon: <Users className="w-8 h-8 text-primary" />,
-          title: "Zajednica i Podrška",
-          desc: "Pristup privatnom Discordu gdje direktno komuniciraš sa mentorima i kolegama."
-        },
-        {
-          icon: <Check className="w-8 h-8 text-primary" />,
-          title: "Praktično Znanje",
-          desc: "Fokusiramo se na 'step-by-step' tutorijale koji te vode od nule do prve zarade."
-        }
-      ].map((feature, i) => (
-        <motion.div 
-          key={i}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="p-8 rounded-2xl bg-card border border-white/5 hover:border-primary/20 transition-colors"
-        >
-          <div className="mb-6 w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-            {feature.icon}
-          </div>
-          <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-          <p className="text-muted-foreground leading-relaxed">
-            {feature.desc}
-          </p>
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</section>
-
-        {/* Programs Section */}
-        <section id="programs" className="py-24 lg:py-32 bg-card/30">
+      {/* WHY US SECTION */}
+      <section className="py-24 bg-background relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="text-center mb-16">
-        <span className="text-primary font-semibold tracking-wider uppercase text-sm">Naši programi</span>
-        <h2 className="text-4xl font-bold mt-4">Edukacijski programi</h2>
+          <div className="text-center mb-16">
+            <span className="text-primary font-semibold tracking-wider uppercase text-sm">Prednosti</span>
+            <h2 className="text-4xl font-bold mt-4">Zašto baš Continental Academy?</h2>
           </div>
 
-    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {programs.map((program, index) => (
-        <motion.div
-          key={program.id || index}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: index * 0.1 }}
-        >
-          {/* Dodali smo overflow-hidden i group klasu za animaciju slike */}
-          <Card className="h-full flex flex-col bg-card border-white/5 hover:border-primary/20 transition-all overflow-hidden group">
-            
-            {/* NOVI DIO: Thumbnail slike iznad naslova */}
-            <div className="aspect-video w-full overflow-hidden bg-muted relative">
-              {program.thumbnail_url ? (
-                <img 
-                  src={program.thumbnail_url} 
-                  alt={program.name} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-              ) : (
-                // Ako nema slike, prikazuje se ikona kao fallback
-                <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                  <BookOpen className="w-10 h-10 text-primary/30" />
-                </div>
-              )}
-            </div>
-
-            <CardHeader className="pb-4">
-              {/* Naslov i opis */}
-              <CardTitle className="text-xl">{program.name}</CardTitle>
-              <CardDescription className="line-clamp-2">{program.description}</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="flex-1 flex flex-col">
-              <div className="mb-6">
-                <span className="text-3xl font-bold">€{program.price}</span>
-                <span className="text-muted-foreground text-sm">/mjesečno</span>
-              </div>
-              
-              <ul className="space-y-3 mb-8 flex-1">
-                {program.features?.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Button 
-                className="w-full rounded-full"
-                onClick={() => handleSubscribe(program.id)}
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <TrendingUp className="w-8 h-8 text-primary" />,
+                title: "Dokazane Strategije",
+                desc: "Naše metode nisu teorija, već sistemi koji trenutno donose profit na tržištu."
+              },
+              {
+                icon: <Users className="w-8 h-8 text-primary" />,
+                title: "Zajednica i Podrška",
+                desc: "Pristup privatnom Discordu gdje direktno komuniciraš sa mentorima i kolegama."
+              },
+              {
+                icon: <Check className="w-8 h-8 text-primary" />,
+                title: "Praktično Znanje",
+                desc: "Fokusiramo se na 'step-by-step' tutorijale koji te vode od nule do prve zarade."
+              }
+            ].map((feature, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="p-8 rounded-2xl bg-card border border-white/5 hover:border-primary/20 transition-colors"
               >
-                Pretplati se
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</section>
+                <div className="mb-6 w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {feature.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* PROGRAMS SECTION */}
+      <section id="programs" className="py-24 lg:py-32 bg-card/30">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="text-center mb-16">
+            <span className="text-primary font-semibold tracking-wider uppercase text-sm">Naši programi</span>
+            <h2 className="text-4xl font-bold mt-4">Edukacijski programi</h2>
+          </div>
 
-      {/* Results Gallery */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {programs.map((program, index) => (
+              <motion.div
+                key={program.id || index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="h-full"
+              >
+                <Card className="h-full flex flex-col bg-card border-white/5 hover:border-primary/20 transition-all overflow-hidden group">
+                  <div className="aspect-video w-full overflow-hidden bg-muted relative">
+                    {program.thumbnail_url ? (
+                      <img 
+                        src={program.thumbnail_url} 
+                        alt={program.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                        <BookOpen className="w-10 h-10 text-primary/30" />
+                      </div>
+                    )}
+                  </div>
+
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-xl">{program.name}</CardTitle>
+                    <CardDescription className="line-clamp-2">{program.description}</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="flex-1 flex flex-col">
+                    <div className="mb-6">
+                      <span className="text-3xl font-bold">€{program.price}</span>
+                      <span className="text-muted-foreground text-sm">/mjesečno</span>
+                    </div>
+                    
+                    <ul className="space-y-3 mb-8 flex-1">
+                      {program.features?.map((feature, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    <Button 
+                      className="w-full rounded-full"
+                      onClick={() => handleSubscribe(program.id)}
+                    >
+                      Pretplati se
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* RESULTS GALLERY */}
       <section className="py-24 lg:py-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center mb-12">
             <span className="text-primary font-semibold tracking-wider uppercase text-sm">Rezultati</span>
             <h2 className="text-4xl font-bold mt-4">Uspjesi naših studenata</h2>
         </div>
         
-        <div className="relative flex overflow-x-auto gap-6 px-6 pb-8 no-scrollbar">
+        <div className="relative flex overflow-x-auto gap-6 px-6 pb-8 no-scrollbar scroll-gallery">
           {(results.length > 0 ? results : []).map((result, index) => (
-            <div key={index} className="flex-shrink-0 w-80 aspect-[4/5] rounded-2xl overflow-hidden relative group">
+            <div key={index} className="flex-shrink-0 w-80 aspect-[4/5] rounded-2xl overflow-hidden relative group shadow-2xl border border-white/5">
               <img src={result.image_url} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-end">
-                <p className="text-white mt-auto">{result.caption}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6 flex flex-col justify-end">
+                <p className="text-white font-medium">{result.caption}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* FAQ Section */}
+      {/* FAQ SECTION */}
       <section id="faq" className="py-24 lg:py-32 bg-card/30">
         <div className="max-w-3xl mx-auto px-6">
           <h2 className="text-4xl font-bold text-center mb-12">Često postavljana pitanja</h2>
           <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq) => (
-              <AccordionItem key={faq.id} value={faq.id} className="bg-background px-6 rounded-xl border-white/5">
-                <AccordionTrigger>{faq.question}</AccordionTrigger>
-                <AccordionContent>{faq.answer}</AccordionContent>
+              <AccordionItem key={faq.id} value={faq.id} className="bg-background px-6 rounded-xl border-white/5 shadow-sm">
+                <AccordionTrigger className="hover:no-underline">{faq.question}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">{faq.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
         </div>
       </section>
 
-      {/* Discord CTA */}
+      {/* DISCORD CTA */}
       <section className="py-24 lg:py-32">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <div className="w-20 h-20 rounded-2xl bg-[#5865F2]/20 flex items-center justify-center mx-auto mb-8">
