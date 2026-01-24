@@ -81,11 +81,10 @@ const Home = () => {
   }
 
   return (
-    // GLAVNI WRAPPER - Ovdje postavljamo crnu pozadinu
+    // GLAVNI WRAPPER
     <div className="relative min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-pink-500/30">
       
       {/* --- GLOW EFEKTI (SLOJ 0) --- */}
-      {/* Absolute pozicionirani unutar ovog diva, z-0 da budu ispod teksta */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         {/* Narandžasta kugla - Gore lijevo */}
         <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-orange-600/20 blur-[120px] rounded-full mix-blend-screen opacity-60" />
@@ -93,21 +92,26 @@ const Home = () => {
         {/* Roza kugla - Dolje desno */}
         <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-pink-600/20 blur-[120px] rounded-full mix-blend-screen opacity-50" />
         
-        {/* Dodatni glow u sredini za dubinu */}
+        {/* Sredina */}
         <div className="absolute top-[40%] left-[20%] w-[40vw] h-[40vw] bg-purple-900/10 blur-[150px] rounded-full" />
       </div>
 
       {/* --- SADRŽAJ (SLOJ 10) --- */}
-      {/* relative z-10 osigurava da je tekst IZNAD glow efekata */}
       <div className="relative z-10">
 
         {/* 1. TOP BANNER */}
+        {/* mt-20 spušta banner ispod navbara */}
         <div className="w-full relative mt-20 border-b border-white/5 overflow-hidden shadow-2xl">
           <img 
             src={settings.hero_image_url || "https://i.ibb.co/Ktb6Frq/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"}
-            className="w-full h-auto object-cover opacity-80 block"
+            // FIX:
+            // h-auto -> Na mobilnom visina automatska (prirodna)
+            // md:h-[600px] -> Na desktopu visina fiksirana na 600px (da ne bude ogromna)
+            // object-cover -> Osigurava da slika popuni prostor bez deformacije (malo se cropuje ako treba)
+            className="w-full h-auto md:h-[600px] object-cover opacity-80 block"
             alt="Banner"
           />
+          {/* Crna sjena na dnu */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-transparent" />
         </div>
 
