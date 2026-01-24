@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import MuxPlayer from '@mux/mux-player-react';
 
 const Home = () => {
+  // --- STATE ---
   const [programs, setPrograms] = useState([]);
   const [faqs, setFaqs] = useState([]);
   const [results, setResults] = useState([]);
@@ -23,6 +24,7 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // --- API LOAD ---
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -53,6 +55,7 @@ const Home = () => {
     loadData();
   }, []);
 
+  // --- PLAĆANJE ---
   const handleSubscribe = async (programId) => {
     if (!user) {
       navigate('/login');
@@ -78,21 +81,13 @@ const Home = () => {
   }
 
   return (
-    /* FIX: 'isolate' pravi novi stacking context. 
-       To znači da sve unutar ovog div-a (glow i sadržaj) ostaje iznad pozadine definisane u index.css 
-    */
     <div className="relative min-h-screen bg-[#050505] text-white font-sans isolate selection:bg-pink-500/30">
       
       {/* --- GLOW EFEKTI (PODIGNUTI NA z-[1]) --- */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]">
-        {/* Narandžasti Glow - Jači intenzitet */}
-        <div className="absolute top-[-5%] left-[-5%] w-[70vw] h-[70vw] bg-orange-600/25 blur-[120px] rounded-full mix-blend-screen animate-pulse" style={{ animationDuration: '6s' }} />
-        
-        {/* Rozi Glow - Jači intenzitet */}
-        <div className="absolute bottom-[-5%] right-[-5%] w-[70vw] h-[70vw] bg-pink-600/20 blur-[120px] rounded-full mix-blend-screen" />
-        
-        {/* Središnji plavi/ljubičasti za dubinu */}
-        <div className="absolute top-[30%] left-[15%] w-[50vw] h-[50vw] bg-indigo-900/15 blur-[150px] rounded-full" />
+        <div className="absolute top-[-5%] left-[-5%] w-[70vw] h-[70vw] bg-orange-600/20 blur-[120px] rounded-full mix-blend-screen opacity-60 animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[70vw] h-[70vw] bg-pink-600/15 blur-[120px] rounded-full mix-blend-screen opacity-50" />
+        <div className="absolute top-[30%] left-[15%] w-[50vw] h-[50vw] bg-indigo-900/10 blur-[150px] rounded-full opacity-30" />
       </div>
 
       {/* --- SADRŽAJ (PODIGNUT NA z-[10]) --- */}
@@ -103,7 +98,7 @@ const Home = () => {
           <div className="max-w-7xl mx-auto">
             <img 
               src={settings.hero_image_url || "https://i.ibb.co/Ktb6Frq/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"}
-              className="w-full h-auto md:max-h-[550px] object-contain block mx-auto opacity-90"
+              className="w-full h-auto md:max-h-[500px] object-contain block mx-auto opacity-90"
               alt="Banner"
             />
           </div>
@@ -125,7 +120,7 @@ const Home = () => {
                 )}
               </h1>
               <p className="text-white/70 text-lg md:text-xl font-bold uppercase tracking-widest mb-10 max-w-lg">
-                {settings.hero_subheadline || 'Dominacija u digitalnom svetu.'}
+                {settings.hero_subheadline || 'Dominacija u digitalnom svetu. Nauči vještine budućnosti.'}
               </p>
               <Button 
                 onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
@@ -226,9 +221,9 @@ const Home = () => {
           <div className="max-w-7xl mx-auto relative overflow-hidden rounded-[3.5rem] p-12 md:p-24 flex flex-col md:flex-row items-center justify-between gap-10 shadow-[0_0_80px_rgba(234,88,12,0.2)]">
             <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-pink-700 opacity-90" />
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
-            <div className="relative z-10 text-center md:text-left">
-              <h2 className="text-5xl md:text-8xl font-black mb-4 text-black uppercase tracking-tighter italic leading-none">Zajednica</h2>
-              <p className="text-black font-black text-2xl uppercase tracking-widest">1,500+ ČLANOVA</p>
+            <div className="relative z-10 text-center md:text-left text-black">
+              <h2 className="text-5xl md:text-8xl font-black mb-4 uppercase italic leading-none">Zajednica</h2>
+              <p className="font-black text-2xl uppercase tracking-widest">1,500+ ČLANOVA</p>
             </div>
             <a href={settings.discord_invite_url || '#'} target="_blank" rel="noreferrer" className="relative z-10">
               <Button className="bg-black text-white hover:bg-white hover:text-black px-12 py-10 rounded-[2rem] font-black text-2xl uppercase shadow-2xl transition-all h-auto flex items-center gap-4">
