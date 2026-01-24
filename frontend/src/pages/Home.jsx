@@ -123,7 +123,7 @@ const Home = () => {
               onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
               className="bg-orange-600 hover:bg-orange-700 text-white px-10 py-8 rounded-2xl font-black text-xl uppercase shadow-[0_0_40px_rgba(234,88,12,0.4)] h-auto border border-orange-400/20"
             >
-              KRENI ODMAH
+              ZAPOCNI DANAS
             </Button>
           </div>
 
