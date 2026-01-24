@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Play, 
-  CheckCircle2, 
-  ArrowRight, 
-  Users, 
-  Star, 
-  Zap, 
-  ShieldCheck,
-  TrendingUp,
-  Globe,
-  Rocket
-} from 'lucide-react';
+import { Play, CheckCircle2, ArrowRight, Users, Zap, Globe, Star, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
@@ -19,182 +8,134 @@ import axios from 'axios';
 
 const Home = () => {
   const { user } = useAuth();
+  const [programs, setPrograms] = useState([]); // Prazno na početku, puni se sa API-ja
+  const [faqs, setFaqs] = useState([]); // Isto za FAQ
   const [loading, setLoading] = useState(null);
+  const [activeFaq, setActiveFaq] = useState(null);
 
-  // Podaci su unutar koda da bi sajt uvek bio pun i "živ"
-  const programs = [
-    {
-      id: 'p1',
-      name: 'Starter Academy',
-      price: 49,
-      badge: 'Najpopularnije',
-      features: ['Osnove digitalne zarade', 'Zajednica studenata', 'Live webinar nedeljno', 'Pristup alatima']
-    },
-    {
-      id: 'p2',
-      name: 'Elite Mastery',
-      price: 149,
-      badge: 'Preporuka',
-      features: ['1 na 1 konsultacije', 'Privatne strategije', 'Napredni resursi', 'Direktan kontakt']
-    },
-    {
-      id: 'p3',
-      name: 'Business Scale',
-      price: 299,
-      badge: 'VIP',
-      features: ['Full automatizacija', 'Scale do 10k+', 'Investicioni saveti', 'VIP Discord kanal']
-    }
-  ];
-
-  const handleJoinProgram = async (programId) => {
-    if (!user) {
-      toast.error("Moraš biti prijavljen da bi se upisao.");
-      return;
-    }
-    setLoading(programId);
-    try {
-      const res = await axios.post(`/api/payments/checkout/subscription?program_id=${programId}`);
-      if (res.data.checkout_url) {
-        window.location.href = res.data.checkout_url;
+  // 1. POVLAČENJE PODATAKA IZ ADMIN PANELA
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [progRes, faqRes] = await Promise.all([
+          axios.get('/api/public/programs'), // Tvoja API ruta za programe
+          axios.get('/api/public/faqs')      // Tvoja API ruta za FAQ
+        ]);
+        setPrograms(progRes.data);
+        setFaqs(faqRes.data);
+      } catch (err) {
+        console.error("Greška pri učitavanju podataka:", err);
       }
+    };
+    fetchData();
+  }, []);
+
+  const handleJoin = async (id) => {
+    if (!user) return toast.error("Prijavi se prvo.");
+    setLoading(id);
+    try {
+      const res = await axios.post(`/api/payments/checkout/subscription?program_id=${id}`);
+      if (res.data.checkout_url) window.location.href = res.data.checkout_url;
     } catch (err) {
-      toast.error("Greška pri pokretanju uplate.");
+      toast.error("Greška pri pokretanju plaćanja.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="relative bg-[#050505] min-h-screen text-white overflow-x-hidden">
+    <div className="bg-[#050505] min-h-screen text-white overflow-x-hidden">
       
-      {/* 1. HERO SECTION */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Glows */}
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-500/10 via-transparent to-transparent opacity-50" />
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-orange-600/20 blur-[120px] rounded-full" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-pink-600/20 blur-[120px] rounded-full" />
-
-        <div className="relative z-10 text-center px-6 max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
+      {/* HERO SECTION */}
+      <section className="h-screen flex items-center justify-center relative px-6">
+        <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/10 via-transparent to-pink-600/10" />
+        <div className="text-center relative z-10">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            className="text-6xl md:text-[10rem] font-black mb-8 tracking-tighter leading-[0.85] uppercase"
           >
-            <div className="flex justify-center mb-8">
-              <span className="px-5 py-2 rounded-full border border-orange-500/30 bg-orange-500/5 text-orange-400 text-[10px] font-black tracking-[0.4em] uppercase">
-                Continental Academy • Est. 2024
-              </span>
-            </div>
-            
-            <h1 className="text-6xl md:text-[10rem] font-black mb-8 tracking-tighter leading-[0.85] uppercase">
-              Build Your <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-orange-500 animate-gradient">
-                Empire
-              </span>
-            </h1>
-            
-            <p className="text-muted-foreground text-lg md:text-2xl mb-12 max-w-3xl mx-auto font-light tracking-tight leading-relaxed">
-              Pridruži se najjačoj zajednici na Balkanu. Nauči kako da monetizuješ digitalne veštine i preuzmeš kontrolu nad svojim životom.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
-              <Button 
-                onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
-                className="w-full sm:w-auto px-12 py-9 rounded-[2rem] text-xl font-black bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 shadow-[0_20px_50px_rgba(249,115,22,0.3)] transition-all active:scale-95"
-              >
-                KRENI ODMAH <Rocket className="ml-3 w-6 h-6" />
-              </Button>
-              <button className="flex items-center gap-4 text-white/70 font-bold hover:text-white transition-all group">
-                <div className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center group-hover:border-orange-500/40 group-hover:bg-orange-500/5">
-                  <Play className="w-5 h-5 fill-current ml-1 text-orange-500" />
-                </div>
-                POGLEDAJ VIDEO
-              </button>
-            </div>
-          </motion.div>
+            Continental <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-orange-500">Academy</span>
+          </motion.h1>
+          <Button 
+            onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-12 py-9 rounded-[2rem] font-black text-xl shadow-[0_20px_50px_rgba(234,88,12,0.3)] transition-all"
+          >
+            ZAPOČNI ODMAH <ArrowRight className="ml-2" />
+          </Button>
         </div>
       </section>
 
-      {/* 2. STATS SECTION */}
-      <section className="relative z-10 py-32 border-y border-white/5 bg-black/60 backdrop-blur-3xl">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-16">
+      {/* STATS SEKCIJA */}
+      <section className="py-24 border-y border-white/5 bg-black/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
           {[
-            { label: 'Aktivnih Članova', value: '1,500+', icon: Users, color: 'text-orange-500' },
-            { label: 'Uspješnih Projekata', value: '120+', icon: Zap, color: 'text-pink-500' },
-            { label: 'Zemalja', value: '15+', icon: Globe, color: 'text-orange-400' },
-            { label: 'Zadovoljstvo', value: '4.9/5', icon: Star, color: 'text-pink-400' }
+            { label: 'Članova', value: '580+', icon: Users },
+            { label: 'Projekata', value: '200+', icon: Zap },
+            { label: 'Zemalja', value: '9', icon: Globe },
+            { label: 'Ocena', value: '4.9/5', icon: Star }
           ].map((stat, i) => (
-            <div key={i} className="text-center group">
-              <div className={`w-12 h-12 mx-auto mb-6 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 group-hover:border-orange-500/30 transition-all`}>
-                <stat.icon className={`w-6 h-6 ${stat.color}`} />
-              </div>
-              <h3 className="text-5xl font-black mb-2 tracking-tighter">{stat.value}</h3>
-              <p className="text-muted-foreground text-xs uppercase tracking-[0.3em] font-bold opacity-60">{stat.label}</p>
+            <div key={i} className="text-center">
+              <stat.icon className="w-6 h-6 mx-auto mb-4 text-orange-500" />
+              <div className="text-4xl font-black mb-1 tracking-tighter">{stat.value}</div>
+              <div className="text-[10px] uppercase tracking-[0.3em] text-white/40">{stat.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 3. PROGRAMS SECTION */}
-      <section id="programs" className="relative z-10 py-40 px-6 lg:px-12 max-w-7xl mx-auto">
-        <div className="text-center mb-32">
-          <h2 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter uppercase leading-none">
-            Ekskluzivni <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">Programi</span>
-          </h2>
-          <div className="h-2 w-32 bg-gradient-to-r from-orange-500 to-pink-500 mx-auto rounded-full shadow-[0_0_30px_rgba(249,115,22,0.6)]" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {programs.map((program) => (
-            <motion.div 
-              key={program.id}
-              whileHover={{ y: -20 }}
-              className="relative group p-[1px] rounded-[3rem] overflow-hidden"
-            >
-              {/* Border Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent group-hover:from-orange-500 group-hover:to-pink-600 transition-all duration-700" />
-              
-              <div className="relative bg-[#0a0a0a] rounded-[3rem] p-12 h-full flex flex-col">
-                <div className="absolute top-8 right-8">
-                    <span className="px-4 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[10px] font-bold uppercase tracking-widest">
-                        {program.badge}
-                    </span>
-                </div>
-
-                <h3 className="text-3xl font-black tracking-tight text-white mb-2 uppercase">{program.name}</h3>
-                
-                <div className="flex items-baseline gap-2 mb-10">
-                  <span className="text-7xl font-black tracking-tighter text-white">€{program.price}</span>
-                  <span className="text-muted-foreground text-sm font-bold uppercase opacity-50">/msc</span>
-                </div>
-
-                <div className="space-y-6 mb-16 flex-grow">
-                  {program.features.map((f, i) => (
-                    <div key={i} className="flex items-center gap-4 text-white/80">
-                      <div className="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-500" />
-                      </div>
-                      <span className="text-sm font-medium tracking-tight">{f}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Button 
-                  onClick={() => handleJoinProgram(program.id)}
-                  disabled={loading === program.id}
-                  className="w-full py-9 rounded-[1.5rem] font-black tracking-[0.1em] bg-white text-black hover:bg-gradient-to-r hover:from-orange-500 hover:to-pink-600 hover:text-white transition-all duration-500 uppercase text-lg"
-                >
-                  {loading === program.id ? "Procesiranje..." : "PRIDRUŽI SE SADA"}
-                </Button>
-              </div>
-            </motion.div>
+      {/* PROGRAMS SECTION (Dynamic) */}
+      <section id="programs" className="py-32 max-w-7xl mx-auto px-6">
+        <h2 className="text-5xl font-black text-center mb-20 uppercase tracking-tighter">
+          Izaberi svoj <span className="text-orange-500">put</span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {programs.map((p) => (
+            <div key={p._id} className="bg-white/[0.03] border border-white/10 p-10 rounded-[2.5rem] hover:border-orange-500/50 transition-all relative group overflow-hidden">
+              <h3 className="text-2xl font-black mb-4 uppercase">{p.name}</h3>
+              <div className="text-6xl font-black mb-8 tracking-tighter">€{p.price}</div>
+              <ul className="mb-10 space-y-4 text-sm font-medium opacity-80">
+                {p.features?.map((f, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-orange-500" /> {f}
+                  </li>
+                ))}
+              </ul>
+              <Button 
+                onClick={() => handleJoin(p._id)} 
+                disabled={loading === p._id}
+                className="w-full py-8 rounded-2xl bg-white text-black hover:bg-orange-500 hover:text-white font-black transition-all uppercase tracking-widest"
+              >
+                {loading === p._id ? "UČITAVANJE..." : "PRIDRUŽI SE"}
+              </Button>
+            </div>
           ))}
         </div>
       </section>
-      
-      {/* Decorative Bottom Glow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-orange-600/5 blur-[150px] pointer-events-none" />
+
+      {/* FAQ SECTION (Dynamic) */}
+      <section className="py-32 max-w-4xl mx-auto px-6">
+        <h2 className="text-4xl font-black text-center mb-16 uppercase tracking-tighter">Česta <span className="text-orange-500">Pitanja</span></h2>
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div key={faq._id || index} className="border border-white/10 rounded-2xl overflow-hidden bg-white/5">
+              <button 
+                onClick={() => setActiveFaq(activeFaq === index ? null : index)}
+                className="w-full p-6 text-left flex justify-between items-center hover:bg-white/5 transition-all"
+              >
+                <span className="font-bold text-lg">{faq.question}</span>
+                {activeFaq === index ? <Minus className="text-orange-500" /> : <Plus />}
+              </button>
+              {activeFaq === index && (
+                <div className="p-6 pt-0 text-white/60 leading-relaxed border-t border-white/5">
+                  {faq.answer}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };
