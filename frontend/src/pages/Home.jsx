@@ -14,18 +14,18 @@ const Home = () => {
   const [loading, setLoading] = useState(null);
   const [activeFaq, setActiveFaq] = useState(null);
 
-  // POVLAČENJE PODATAKA IZ ADMIN PANELA
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // ISPRAVLJENO: Nema više '/public' u putanji, jer tvoj server.js koristi '/api'
         const [progRes, faqRes] = await Promise.all([
-          axios.get('/api/public/programs'), // Ovo gađa tvoj public.js
-          axios.get('/api/public/faqs')
+          axios.get('/api/programs'), 
+          axios.get('/api/faqs')
         ]);
         setPrograms(progRes.data);
         setFaqs(faqRes.data);
       } catch (err) {
-        console.error("Database connection error:", err);
+        console.error("Greška pri učitavanju podataka:", err);
       }
     };
     fetchData();
@@ -35,6 +35,7 @@ const Home = () => {
     if (!user) return toast.error("Prijavi se prvo.");
     setLoading(id);
     try {
+      // ISPRAVLJENO: Koristi tvoju rutu za plaćanje
       const res = await axios.post(`/api/payments/checkout/subscription?program_id=${id}`);
       if (res.data.checkout_url) window.location.href = res.data.checkout_url;
     } catch (err) {
@@ -45,28 +46,30 @@ const Home = () => {
   };
 
   return (
-    // KLJUČNA PROMENA: z-50 i relative osiguravaju da je ovo IZNAD sjena iz index.css
+    // Z-INDEX 50 osigurava da se vidi preko tvojih CSS sjena
     <div className="relative z-50 bg-[#050505] min-h-screen text-white font-sans overflow-x-hidden">
       
       {/* 1. TOP BANNER */}
-      <div className="w-full h-[350px] md:h-[500px] relative overflow-hidden">
+      <div className="w-full h-[300px] md:h-[450px] relative overflow-hidden border-b border-white/5">
         <img 
           src="/banner.jpg" 
-          className="w-full h-full object-cover opacity-60"
+          className="w-full h-full object-cover opacity-80"
           alt="Continental Banner"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#050505]" />
       </div>
 
-      {/* 2. HERO + MUX VIDEO */}
-      <section className="max-w-7xl mx-auto px-6 py-20 relative z-50">
+      {/* 2. HERO + MUX VIDEO (Side by Side) */}
+      <section className="max-w-7xl mx-auto px-6 py-16 md:py-24 relative z-50">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="text-left">
-            <h1 className="text-6xl md:text-[9rem] font-black tracking-tighter leading-[0.8] uppercase mb-10">
+            <h1 className="text-6xl md:text-[9rem] font-black tracking-tighter leading-[0.8] uppercase mb-8">
               Continental <br />
               <span className="text-orange-600">Academy</span>
             </h1>
-            <p className="text-white/50 text-xl uppercase tracking-widest mb-10 font-bold">Dominacija u digitalnom svetu.</p>
+            <p className="text-white/50 text-xl uppercase tracking-widest mb-10 font-bold">
+              Dominacija u digitalnom svetu.
+            </p>
             <Button 
               onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
               className="bg-orange-600 hover:bg-orange-700 text-white px-10 py-8 rounded-2xl font-black text-xl uppercase shadow-xl"
@@ -75,6 +78,7 @@ const Home = () => {
             </Button>
           </div>
 
+          {/* MUX PLAYER */}
           <div className="rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black aspect-video relative z-50">
             <MuxPlayer
               playbackId="TVOJ_MUX_PLAYBACK_ID" // Ubaci svoj ID
@@ -87,26 +91,24 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 3. PROGRAMI (Dynamic from DB) */}
+      {/* 3. PROGRAMI (Iz baze) */}
       <section id="programs" className="py-32 max-w-7xl mx-auto px-6 relative z-50">
         <h2 className="text-5xl font-black mb-16 uppercase tracking-tighter">Programi</h2>
         
         {programs.length === 0 ? (
-          <p className="text-white/50">Učitavanje programa...</p>
+          <div className="text-center text-white/50 py-10">Učitavanje programa...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {programs.map((p) => (
               <div key={p._id} className="bg-[#0f0f0f] border border-white/10 rounded-[2.5rem] overflow-hidden group hover:border-orange-500/50 transition-all">
                 <div className="h-64 overflow-hidden relative">
-                  {/* Prikazuje sliku iz baze */}
-                  <img src={p.image_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={p.name} />
+                  <img src={p.image_url || '/placeholder.jpg'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={p.name} />
                   <div className="absolute inset-0 bg-black/20" />
                 </div>
                 <div className="p-10 flex flex-col gap-4">
                   <h3 className="text-3xl font-black uppercase tracking-tight">{p.name}</h3>
                   <div className="text-5xl font-black text-orange-500">€{p.price}</div>
                   
-                  {/* Features iz baze */}
                   <ul className="space-y-3 my-4">
                     {p.features?.map((f, i) => (
                       <li key={i} className="flex items-center gap-3 text-white/70 text-sm font-bold">
@@ -129,7 +131,7 @@ const Home = () => {
         )}
       </section>
 
-      {/* 4. FAQ (Dynamic from DB) */}
+      {/* 4. FAQ (Iz baze) */}
       <section className="py-24 max-w-4xl mx-auto px-6 relative z-50">
         <h2 className="text-4xl font-black mb-12 uppercase text-center tracking-tighter text-orange-600">FAQ</h2>
         <div className="space-y-4">
