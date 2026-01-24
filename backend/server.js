@@ -5,6 +5,9 @@ const cors = require('cors');
 const path = require('path');
 const http = require('http');
 
+// DODANO: Model za kreiranje Admina
+const User = require('./models/User'); 
+
 // Rute
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -51,11 +54,44 @@ app.get('*', (req, res) => {
 });
 
 /* ==========================================
-   START
+   START & DATABASE
 ========================================== */
 mongoose.connect(process.env.MONGO_URL)
-.then(() => {
+.then(async () => {
   console.log('✅ MongoDB Povezan');
+
+  // --- AUTOMATSKI ADMIN ACCOUNT START ---
+  try {
+    const adminEmail = 'admin@test.com';
+    const checkAdmin = await User.findOne({ email: adminEmail });
+
+    if (!checkAdmin) {
+      // Ako ne postoji, napravi ga
+      const newAdmin = new User({
+        name: 'Super Admin',
+        email: adminEmail,
+        password: 'password123', // Ovo će se heširati
+        role: 'admin',
+        is_verified: true
+      });
+
+      await newAdmin.save();
+      console.log('👑 KREIRAN ADMIN: admin@test.com | Šifra: password123');
+    } else {
+      // Ako postoji, provjeri da li je admin
+      if (checkAdmin.role !== 'admin') {
+        checkAdmin.role = 'admin';
+        await checkAdmin.save();
+        console.log('👑 Korisnik admin@test.com je unaprijeđen u ADMINA.');
+      } else {
+        console.log('👑 Admin account već postoji (admin@test.com)');
+      }
+    }
+  } catch (error) {
+    console.error('⚠️ Greška pri kreiranju admina:', error.message);
+  }
+  // --- AUTOMATSKI ADMIN ACCOUNT END ---
+
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server radi na portu ${PORT}`);
   });
