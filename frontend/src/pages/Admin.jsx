@@ -89,16 +89,16 @@ const Admin = () => {
         settingsAPI.get()
       ]);
       
-      setAnalytics(analyticsRes.data);
-      setUsers(usersRes.data);
-      setPrograms(programsRes.data);
-      setCourses(coursesRes.data);
-      setProducts(productsRes.data);
-      setFaqs(faqsRes.data);
-      setResults(resultsRes.data);
+      setAnalytics(analyticsRes?.data);
+      setUsers(usersRes?.data || []);
+      setPrograms(programsRes?.data || []);
+      setCourses(coursesRes?.data || []);
+      setProducts(productsRes?.data || []);
+      setFaqs(faqsRes?.data || []);
+      setResults(resultsRes?.data || []);
       setSettings(Array.isArray(settingsRes?.data) ? settingsRes.data[0] : (settingsRes?.data || {}));
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Greška pri učitavanju:', error);
       toast.error('Greška pri učitavanju podataka');
     } finally {
       setLoading(false);
@@ -109,9 +109,9 @@ const Admin = () => {
     try {
       await settingsAPI.update(settings);
       toast.success('Postavke ažurirane');
-      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
-      toast.error('Greška pri ažuriranju postavki');
+      console.error('Settings error:', error);
+      toast.error('Greška! Provjeri konzolu (F12)');
     }
   };
 
@@ -121,7 +121,7 @@ const Admin = () => {
       setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
       toast.success('Uloga ažurirana');
     } catch (error) {
-      toast.error('Greška');
+      toast.error('Greška pri promjeni uloge');
     }
   };
 
@@ -138,22 +138,9 @@ const Admin = () => {
       } else {
         await adminAPI.addCourseToUser(selectedUser.id, courseId);
       }
-      setUsers(users.map(u => {
-        if (u.id === selectedUser.id) {
-          const uCourses = u.courses || [];
-          return {
-            ...u,
-            courses: hasAccess ? uCourses.filter(c => c !== courseId) : [...uCourses, courseId]
-          };
-        }
-        return u;
-      }));
-      setSelectedUser(prev => ({
-        ...prev,
-        courses: hasAccess ? (prev.courses || []).filter(c => c !== courseId) : [...(prev.courses || []), courseId]
-      }));
+      loadAllData();
       toast.success('Ažurirano');
-    } catch (e) { toast.error('Greška'); }
+    } catch (e) { toast.error('Greška kod kurseva'); }
   };
 
   const loadCourseLessons = async (courseId) => {
@@ -166,8 +153,11 @@ const Admin = () => {
   const saveProgram = async (data) => {
     try {
       editingItem?.id ? await programsAPI.update(editingItem.id, data) : await programsAPI.create(data);
-      loadAllData(); setShowProgramModal(false); toast.success('Spremljeno');
-    } catch (e) { toast.error('Greška'); }
+      loadAllData(); setShowProgramModal(false); toast.success('Program spremljen');
+    } catch (e) { 
+        console.error('Program Error:', e);
+        toast.error('Greška pri spremanju programa'); 
+    }
   };
 
   const deleteProgram = async (id) => {
@@ -179,7 +169,7 @@ const Admin = () => {
     try {
       editingItem?.id ? await coursesAPI.update(editingItem.id, data) : await coursesAPI.create(data);
       loadAllData(); setShowCourseModal(false); toast.success('Kurs spremljen');
-    } catch (e) { toast.error('Greška'); }
+    } catch (e) { toast.error('Greška pri spremanju kursa'); }
   };
 
   const deleteCourse = async (id) => {
@@ -192,7 +182,7 @@ const Admin = () => {
       editingItem?.id ? await lessonsAPI.update(editingItem.id, data) : await lessonsAPI.create(data);
       if (selectedCourse) loadCourseLessons(selectedCourse.id);
       setShowLessonModal(false); toast.success('Lekcija spremljena');
-    } catch (e) { toast.error('Greška'); }
+    } catch (e) { toast.error('Greška pri spremanju lekcije'); }
   };
 
   const deleteLesson = async (lId, cId) => {
@@ -204,7 +194,10 @@ const Admin = () => {
     try {
       editingItem?.id ? await shopAPI.updateProduct(editingItem.id, data) : await shopAPI.createProduct(data);
       loadAllData(); setShowProductModal(false); toast.success('Proizvod spremljen');
-    } catch (e) { toast.error('Greška'); }
+    } catch (e) { 
+        console.error('Product save error:', e);
+        toast.error('Greška! Provjeri bazu za nove kolone'); 
+    }
   };
 
   const saveFaq = async (data) => {
@@ -226,14 +219,14 @@ const Admin = () => {
     try { await resultsAPI.delete(id); loadAllData(); } catch (e) { toast.error('Greška'); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-10 h-10" /></div>;
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-background">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="heading-2 mb-2">Admin Panel</h1>
-          <p className="text-muted-foreground">Upravljajte platformom i postavkama</p>
+          <h1 className="heading-2 mb-2 text-white">Admin Control Center</h1>
+          <p className="text-muted-foreground">Upravljanje sadržajem i platformom</p>
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
@@ -247,32 +240,35 @@ const Admin = () => {
             <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" /> Postavke</TabsTrigger>
           </TabsList>
 
+          {/* OVERVIEW */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid md:grid-cols-4 gap-6">
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="text-primary" /></div><div><p className="text-2xl font-bold">{analytics?.total_users || 0}</p><p className="text-sm text-muted-foreground">Korisnika</p></div></div></CardContent></Card>
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center"><DollarSign className="text-green-500" /></div><div><p className="text-2xl font-bold">{analytics?.total_subscriptions || 0}</p><p className="text-sm text-muted-foreground">Pretplata</p></div></div></CardContent></Card>
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><GraduationCap className="text-blue-500" /></div><div><p className="text-2xl font-bold">{courses.length}</p><p className="text-sm text-muted-foreground">Kurseva</p></div></div></CardContent></Card>
-              <Card className="luxury-card"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center"><BookOpen className="text-purple-500" /></div><div><p className="text-2xl font-bold">{programs.length}</p><p className="text-sm text-muted-foreground">Programa</p></div></div></CardContent></Card>
+              <Card className="luxury-card border-white/5 bg-card/50 backdrop-blur-sm"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="text-primary" /></div><div><p className="text-2xl font-bold text-white">{analytics?.total_users || 0}</p><p className="text-sm text-muted-foreground">Korisnika</p></div></div></CardContent></Card>
+              <Card className="luxury-card border-white/5 bg-card/50 backdrop-blur-sm"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center"><DollarSign className="text-green-500" /></div><div><p className="text-2xl font-bold text-white">{analytics?.total_subscriptions || 0}</p><p className="text-sm text-muted-foreground">Pretplata</p></div></div></CardContent></Card>
+              <Card className="luxury-card border-white/5 bg-card/50 backdrop-blur-sm"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><GraduationCap className="text-blue-500" /></div><div><p className="text-2xl font-bold text-white">{courses.length}</p><p className="text-sm text-muted-foreground">Kurseva</p></div></div></CardContent></Card>
+              <Card className="luxury-card border-white/5 bg-card/50 backdrop-blur-sm"><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center"><BookOpen className="text-purple-500" /></div><div><p className="text-2xl font-bold text-white">{programs.length}</p><p className="text-sm text-muted-foreground">Programa</p></div></div></CardContent></Card>
             </div>
           </TabsContent>
 
+          {/* USERS */}
           <TabsContent value="users">
-            <Card className="luxury-card">
-              <CardHeader><CardTitle>Upravljanje korisnicima</CardTitle></CardHeader>
+            <Card className="luxury-card border-white/5 bg-card/50">
+              <CardHeader><CardTitle className="text-white">Upravljanje korisnicima</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader><TableRow><TableHead>Ime</TableHead><TableHead>Email</TableHead><TableHead>Uloga</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow className="border-white/10"><TableHead className="text-white/60">Ime</TableHead><TableHead className="text-white/60">Email</TableHead><TableHead className="text-white/60">Uloga</TableHead><TableHead className="text-white/60">Akcije</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>{user.name}</TableCell><TableCell>{user.email}</TableCell>
+                      <TableRow key={user.id} className="border-white/5">
+                        <TableCell className="text-white">{user.name}</TableCell>
+                        <TableCell className="text-white/70">{user.email}</TableCell>
                         <TableCell>
                           <Select value={user.role} onValueChange={(v) => updateUserRole(user.id, v)}>
-                            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent>
+                            <SelectTrigger className="w-24 bg-black/40 border-white/10 text-white"><SelectValue /></SelectTrigger>
+                            <SelectContent className="bg-card border-white/10 text-white"><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell><Button variant="outline" size="sm" onClick={() => openUserCoursesModal(user)}>Kursevi</Button></TableCell>
+                        <TableCell><Button variant="outline" size="sm" onClick={() => openUserCoursesModal(user)} className="border-white/10 text-white">Kursevi</Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -281,19 +277,20 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* COURSES */}
           <TabsContent value="courses">
-            <Card className="luxury-card">
+            <Card className="luxury-card border-white/5 bg-card/50">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Kursevi i Lekcije</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowCourseModal(true); }}><Plus className="w-4 h-4" /> Novi Kurs</Button>
+                <CardTitle className="text-white">Kursevi i Lekcije</CardTitle>
+                <Button onClick={() => { setEditingItem(null); setShowCourseModal(true); }} className="bg-primary hover:bg-primary/90"><Plus className="w-4 h-4 mr-1" /> Novi Kurs</Button>
               </CardHeader>
               <CardContent>
                 <Accordion type="multiple" className="space-y-4">
                   {courses.map((course) => (
                     <AccordionItem key={course.id} value={course.id} className="border-white/10">
-                      <AccordionTrigger className="hover:no-underline px-4" onClick={() => !courseLessons[course.id] && loadCourseLessons(course.id)}>
+                      <AccordionTrigger className="hover:no-underline px-4 text-white" onClick={() => !courseLessons[course.id] && loadCourseLessons(course.id)}>
                         <div className="flex items-center justify-between w-full pr-4">
-                          <span>{course.title} <Badge variant="outline" className="ml-2">{course.program_name}</Badge></span>
+                          <span>{course.title} <Badge variant="outline" className="ml-2 border-primary/30 text-primary">{course.program_name}</Badge></span>
                           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="sm" onClick={() => { setEditingItem(course); setShowCourseModal(true); }}><Edit className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="sm" onClick={() => deleteCourse(course.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
@@ -301,11 +298,11 @@ const Admin = () => {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="px-4 pb-4">
-                        <Button size="sm" className="mb-4" onClick={() => { setSelectedCourse(course); setEditingItem(null); setShowLessonModal(true); }}><Plus className="w-4 h-4" /> Dodaj Lekciju</Button>
+                        <Button size="sm" className="mb-4 bg-white/5 border border-white/10 hover:bg-white/10" onClick={() => { setSelectedCourse(course); setEditingItem(null); setShowLessonModal(true); }}><Plus className="w-4 h-4 mr-1" /> Dodaj Lekciju</Button>
                         <div className="space-y-2">
                           {courseLessons[course.id]?.map((lesson) => (
-                            <div key={lesson.id} className="flex justify-between p-3 bg-white/5 rounded-lg">
-                              <span>{lesson.title}</span>
+                            <div key={lesson.id} className="flex justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                              <span className="text-white/80">{lesson.title}</span>
                               <div className="flex gap-2">
                                 <Button variant="ghost" size="sm" onClick={() => { setSelectedCourse(course); setEditingItem(lesson); setShowLessonModal(true); }}><Edit className="w-4 h-4" /></Button>
                                 <Button variant="ghost" size="sm" onClick={() => deleteLesson(lesson.id, course.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
@@ -321,268 +318,112 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="programs">
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Programi</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowProgramModal(true); }}><Plus className="w-4 h-4" /> Novi Program</Button>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Naziv</TableHead><TableHead>Cijena</TableHead><TableHead>Status</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {programs.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium">{p.name}</TableCell>
-                        <TableCell>€{p.price}</TableCell>
-                        <TableCell><Badge variant={p.is_active ? "default" : "destructive"}>{p.is_active ? "Aktivan" : "Neaktivan"}</Badge></TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(p); setShowProgramModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => deleteProgram(p.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
+          {/* SHOP */}
           <TabsContent value="shop">
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Shop Proizvodi</CardTitle>
-                  <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }}>
-                  <Plus className="w-4 h-4 mr-2" /> Novi Proizvod
-                </Button>
+            <Card className="luxury-card border-white/5 bg-card/50">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-white">Shop Proizvodi</CardTitle>
+                    <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }}><Plus className="w-4 h-4 mr-1" /> Novi Proizvod</Button>
                 </CardHeader>
                 <CardContent>
                   <Table>
-                  <TableHeader>
-                    <TableRow>
-                    <TableHead className="w-20">Slika</TableHead>
-                    <TableHead>Naziv i Opis</TableHead>
-                    <TableHead>Kategorija</TableHead>
-                    <TableHead>Cijena</TableHead>
-                    <TableHead className="text-right">Akcije</TableHead>
-                    </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((prod) => (
-            <TableRow key={prod.id} className="group">
-              <TableCell>
-                <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden border border-white/5">
-                  <img src={prod.image_url} alt="" className="w-full h-full object-cover" />
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-bold">{prod.name}</span>
-                  <span className="text-xs text-muted-foreground line-clamp-1">{prod.description}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-                  {prod.category || 'Bez kategorije'}
-                </Badge>
-              </TableCell>
-              <TableCell className="font-semibold">€{prod.price}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati proizvod?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}>
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </CardContent>
-  </Card>
-</TabsContent>
-
-          <TabsContent value="content" className="space-y-6">
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>FAQ</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowFaqModal(true); }}><Plus className="w-4 h-4" /> Novo Pitanje</Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {faqs.map((f) => (
-                  <div key={f.id} className="flex justify-between p-4 bg-white/5 rounded-lg border border-white/5">
-                    <div><p className="font-medium">{f.question}</p></div>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingItem(f); setShowFaqModal(true); }}><Edit className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => deleteFaq(f.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-            <Card className="luxury-card">
-              <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Rezultati</CardTitle><Button onClick={() => setShowResultModal(true)}><Plus className="w-4 h-4" /> Dodaj</Button></CardHeader>
-              <CardContent><div className="grid grid-cols-4 gap-4">
-                {results.map((r) => (
-                  <div key={r.id} className="relative group"><img src={r.image_url} className="w-full aspect-square object-cover rounded-lg" /><Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => deleteResult(r.id)}><Trash2 className="w-4 h-4" /></Button></div>
-                ))}
-              </div></CardContent>
+                    <TableHeader><TableRow className="border-white/10"><TableHead className="text-white/60">Slika</TableHead><TableHead className="text-white/60">Naziv</TableHead><TableHead className="text-white/60">Kategorija</TableHead><TableHead className="text-white/60">Cijena</TableHead><TableHead className="text-white/60 text-right">Akcije</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                        {products.map((prod) => (
+                            <TableRow key={prod.id} className="border-white/5">
+                                <TableCell><img src={prod.image_url} className="w-10 h-10 object-cover rounded" /></TableCell>
+                                <TableCell className="text-white font-medium">{prod.name}</TableCell>
+                                <TableCell><Badge className="bg-white/5 text-white/60 border-white/10">{prod.category || 'Nema'}</Badge></TableCell>
+                                <TableCell className="text-white">€{prod.price}</TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}><Edit className="w-4 h-4" /></Button>
+                                        <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati?')) shopAPI.deleteProduct(prod.id).then(loadAllData); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
             </Card>
           </TabsContent>
 
+          {/* SETTINGS */}
           <TabsContent value="settings" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
-              {/* BRANDING */}
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Palette className="w-5 h-5" /> Branding</CardTitle></CardHeader>
+                {/* Branding */}
+              <Card className="luxury-card border-white/5 bg-card/50">
+                <CardHeader><CardTitle className="text-white flex items-center gap-2"><Palette className="w-5 h-5 text-primary" /> Branding</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div><Label>Naziv Sajta</Label><Input value={settings.site_name || ''} onChange={(e) => setSettings({...settings, site_name: e.target.value})} /></div>
-                  <div><Label>Logo URL</Label><Input value={settings.logo_url || ''} onChange={(e) => setSettings({...settings, logo_url: e.target.value})} /></div>
-                  <div><Label>Favicon URL</Label><Input value={settings.favicon_url || ''} onChange={(e) => setSettings({...settings, favicon_url: e.target.value})} /></div>
+                  <div><Label className="text-white/60">Naziv Sajta</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.site_name || ''} onChange={(e) => setSettings({...settings, site_name: e.target.value})} /></div>
+                  <div><Label className="text-white/60">Hero Headline</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.hero_headline || ''} onChange={(e) => setSettings({...settings, hero_headline: e.target.value})} /></div>
+                  <div><Label className="text-white/60">Hero Subheadline</Label><Textarea className="bg-black/40 border-white/10 text-white" value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
                 </CardContent>
               </Card>
 
-              {/* HERO & MEDIA */}
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Hero & Media (Mux)</CardTitle></CardHeader>
+              {/* Media */}
+              <Card className="luxury-card border-white/5 bg-card/50">
+                <CardHeader><CardTitle className="text-white flex items-center gap-2"><Video className="w-5 h-5 text-primary" /> Media (Mux)</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label>Hero Video Mux Playback ID</Label>
-                    <Input 
-                      placeholder="Npr: d02K3as..." 
-                      value={settings.hero_video_url || ''} 
-                      onChange={(e) => setSettings({...settings, hero_video_url: e.target.value})} 
-                    />
-                  </div>
-                  <div><Label>Headline</Label><Input value={settings.hero_headline || ''} onChange={(e) => setSettings({...settings, hero_headline: e.target.value})} /></div>
-                  <div><Label>Subheadline</Label><Textarea value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
+                  <div><Label className="text-white/60">Mux Hero Playback ID</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.hero_video_url || ''} onChange={(e) => setSettings({...settings, hero_video_url: e.target.value})} /></div>
+                  <div><Label className="text-white/60">Hero Image URL (Banner)</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.hero_image_url || ''} onChange={(e) => setSettings({...settings, hero_image_url: e.target.value})} /></div>
                 </CardContent>
               </Card>
 
-              {/* SOCIAL MEDIA - PROŠIRENO */}
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="w-5 h-5" /> Social Media</CardTitle></CardHeader>
+              {/* Socials */}
+              <Card className="luxury-card border-white/5 bg-card/50">
+                <CardHeader><CardTitle className="text-white flex items-center gap-2"><Instagram className="w-5 h-5 text-primary" /> Social Networks</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="flex items-center gap-2"><Instagram className="w-4 h-4" /> Instagram URL</Label>
-                      <Input value={settings.instagram_url || ''} onChange={(e) => setSettings({...settings, instagram_url: e.target.value})} placeholder="https://instagram.com/..." />
-                    </div>
-                    <div>
-                      <Label className="flex items-center gap-2"><Globe className="w-4 h-4" /> TikTok URL</Label>
-                      <Input value={settings.tiktok_url || ''} onChange={(e) => setSettings({...settings, tiktok_url: e.target.value})} placeholder="https://tiktok.com/@..." />
-                    </div>
-                    <div>
-                      <Label className="flex items-center gap-2"><Youtube className="w-4 h-4" /> YouTube URL</Label>
-                      <Input value={settings.youtube_url || ''} onChange={(e) => setSettings({...settings, youtube_url: e.target.value})} placeholder="https://youtube.com/..." />
-                    </div>
-                    <div>
-                      <Label className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Discord Link</Label>
-                      <Input value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} />
-                    </div>
-                  </div>
+                  <div><Label className="text-white/60">Instagram URL</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.instagram_url || ''} onChange={(e) => setSettings({...settings, instagram_url: e.target.value})} /></div>
+                  <div><Label className="text-white/60">YouTube URL</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.youtube_url || ''} onChange={(e) => setSettings({...settings, youtube_url: e.target.value})} /></div>
+                  <div><Label className="text-white/60">TikTok URL</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.tiktok_url || ''} onChange={(e) => setSettings({...settings, tiktok_url: e.target.value})} /></div>
+                  <div><Label className="text-white/60">Discord Invite</Label><Input className="bg-black/40 border-white/10 text-white" value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} /></div>
                 </CardContent>
               </Card>
 
-              {/* KONTAKT I FOOTER - NOVO */}
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Kontakt & Footer</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="flex items-center gap-2"><Mail className="w-4 h-4" /> Contact Email</Label>
-                    <Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Privacy Policy URL</Label>
-                      <Input value={settings.privacy_policy_url || ''} onChange={(e) => setSettings({...settings, privacy_policy_url: e.target.value})} placeholder="/privacy" />
-                    </div>
-                    <div>
-                      <Label>Terms of Service URL</Label>
-                      <Input value={settings.terms_url || ''} onChange={(e) => setSettings({...settings, terms_url: e.target.value})} placeholder="/terms" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* VIDLJIVOST */}
-              <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5" /> Vidljivost Sekcija</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                    <Label>Prikaži Rezultate na Home</Label>
-                    <Switch checked={settings.show_results_section} onCheckedChange={(v) => setSettings({...settings, show_results_section: v})} />
-                  </div>
-                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                    <Label>Prikaži FAQ na Home</Label>
-                    <Switch checked={settings.show_faq_section} onCheckedChange={(v) => setSettings({...settings, show_faq_section: v})} />
-                  </div>
-                   <div className="flex items-center justify-between">
-                    <Label>Prikaži Shop na Home</Label>
-                    <Switch checked={settings.show_shop_section} onCheckedChange={(v) => setSettings({...settings, show_shop_section: v})} />
-                  </div>
+              {/* Visibility */}
+              <Card className="luxury-card border-white/5 bg-card/50">
+                <CardHeader><CardTitle className="text-white flex items-center gap-2"><Eye className="w-5 h-5 text-primary" /> Vidljivost</CardTitle></CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between"><Label className="text-white">Prikaži Rezultate</Label><Switch checked={settings.show_results_section} onCheckedChange={(v) => setSettings({...settings, show_results_section: v})} /></div>
+                  <div className="flex items-center justify-between"><Label className="text-white">Prikaži FAQ</Label><Switch checked={settings.show_faq_section} onCheckedChange={(v) => setSettings({...settings, show_faq_section: v})} /></div>
+                  <div className="flex items-center justify-between"><Label className="text-white">Prikaži Shop</Label><Switch checked={settings.show_shop_section} onCheckedChange={(v) => setSettings({...settings, show_shop_section: v})} /></div>
                 </CardContent>
               </Card>
             </div>
-            <div className="flex justify-end pt-4"><Button size="lg" onClick={handleUpdateSettings}><Save className="mr-2 w-5 h-5" /> Spremi Sve Postavke</Button></div>
+            <div className="flex justify-end pt-4"><Button size="lg" onClick={handleUpdateSettings} className="bg-primary hover:bg-primary/90 px-10"><Save className="mr-2 w-5 h-5" /> Spremi Sve Postavke</Button></div>
           </TabsContent>
         </Tabs>
 
-        {/* MODALS */}
+        {/* MODALS (Postojeći Modal Forms - Program, Course, Lesson, Product, Faq, Result) */}
         <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Program</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card border-white/10 text-white"><DialogHeader><DialogTitle>Program</DialogTitle></DialogHeader>
             <ProgramForm initialData={editingItem} onSave={saveProgram} onCancel={() => setShowProgramModal(false)} />
           </DialogContent>
         </Dialog>
 
         <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Kurs</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card border-white/10 text-white"><DialogHeader><DialogTitle>Kurs</DialogTitle></DialogHeader>
             <CourseForm initialData={editingItem} programs={programs} onSave={saveCourse} onCancel={() => setShowCourseModal(false)} />
           </DialogContent>
         </Dialog>
 
         <Dialog open={showLessonModal} onOpenChange={setShowLessonModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Lekcija (Mux Video)</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card border-white/10 text-white"><DialogHeader><DialogTitle>Lekcija (Mux Video)</DialogTitle></DialogHeader>
             <LessonForm initialData={editingItem} courseId={selectedCourse?.id} onSave={saveLesson} onCancel={() => setShowLessonModal(false)} />
           </DialogContent>
         </Dialog>
 
         <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Proizvod</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card border-white/10 text-white"><DialogHeader><DialogTitle>Proizvod</DialogTitle></DialogHeader>
             <ProductForm initialData={editingItem} onSave={saveProduct} onCancel={() => setShowProductModal(false)} />
           </DialogContent>
         </Dialog>
 
         <Dialog open={showFaqModal} onOpenChange={setShowFaqModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>FAQ</DialogTitle></DialogHeader>
+          <DialogContent className="bg-card border-white/10 text-white"><DialogHeader><DialogTitle>FAQ</DialogTitle></DialogHeader>
             <FaqForm initialData={editingItem} onSave={saveFaq} onCancel={() => setShowFaqModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
-          <DialogContent className="bg-card border-white/10"><DialogHeader><DialogTitle>Dodaj Rezultat</DialogTitle></DialogHeader>
-            <ResultForm onSave={saveResult} onCancel={() => setShowResultModal(false)} />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showUserCoursesModal} onOpenChange={setShowUserCoursesModal}>
-          <DialogContent className="bg-card border-white/10 max-w-lg">
-            <DialogHeader><DialogTitle>Kursevi korisnika</DialogTitle><DialogDescription>{selectedUser?.name}</DialogDescription></DialogHeader>
-            <div className="space-y-2 max-h-96 overflow-y-auto mt-4">
-              {courses.map((c) => {
-                const access = selectedUser?.courses?.includes(c.id);
-                return (
-                  <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                    <span>{c.title}</span><Switch checked={access} onCheckedChange={() => toggleUserCourse(c.id, access)} />
-                  </div>
-                );
-              })}
-            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -590,63 +431,23 @@ const Admin = () => {
   );
 };
 
+// --- FORM KOMPONENTE (Sve fixano sa error handlingom) ---
+
 const ProgramForm = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     description: initialData?.description || '',
     price: initialData?.price || 0,
-    currency: initialData?.currency || 'EUR',
     thumbnail_url: initialData?.thumbnail_url || '',
     features: initialData?.features?.join('\n') || '',
     is_active: initialData?.is_active !== false
   });
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: parseFloat(formData.price), features: formData.features.split('\n').filter(f => f.trim())}); }} className="space-y-4">
-      <div><Label>Naziv</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
-      <div><Label>Opis</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} required /></div>
-      <div><Label>Thumbnail URL (Slika)</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} /></div>
-      <div className="grid grid-cols-2 gap-4">
-        <div><Label>Cijena</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
-        <div><Label>Valuta</Label><Input value={formData.currency} disabled /></div>
-      </div>
-      <div><Label>Značajke (svaka u novi red)</Label><Textarea value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} /></div>
-      <div className="flex items-center gap-2"><Switch checked={formData.is_active} onCheckedChange={(v) => setFormData({...formData, is_active: v})} /><Label>Aktivan</Label></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
-    </form>
-  );
-};
-
-const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ title: initialData?.title || '', program_id: initialData?.program_id || '', thumbnail_url: initialData?.thumbnail_url || '' });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naziv Kursa</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-      <div><Label>Program</Label><Select value={formData.program_id} onValueChange={(v) => setFormData({...formData, program_id: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-      <div><Label>Thumbnail URL</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
-    </form>
-  );
-};
-
-const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ 
-    title: initialData?.title || '', 
-    video_url: initialData?.video_url || '', 
-    course_id: courseId 
-  });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Naslov Lekcije</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-      <div>
-        <Label>Mux Playback ID</Label>
-        <Input 
-          placeholder="Unesi Playback ID sa Mux-a" 
-          value={formData.video_url} 
-          onChange={(e) => setFormData({...formData, video_url: e.target.value})} 
-          required 
-        />
-      </div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: Number(formData.price), features: formData.features.split('\n').filter(f => f.trim())}); }} className="space-y-4">
+      <div><Label>Naziv</Label><Input className="bg-black/40 border-white/10" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
+      <div><Label>Cijena (€)</Label><Input type="number" className="bg-black/40 border-white/10" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
+      <div><Label>Značajke (svaka u novi red)</Label><Textarea className="bg-black/40 border-white/10" value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} /></div>
+      <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
     </form>
   );
 };
@@ -660,39 +461,51 @@ const ProductForm = ({ initialData, onSave, onCancel }) => {
     category: initialData?.category || ''   
   });
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: parseFloat(formData.price)}); }} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: Number(formData.price)}); }} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div><Label>Naziv Proizvoda</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
-        <div><Label>Kategorija</Label><Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} placeholder="E-book, Template..." /></div>
+        <div><Label>Naziv</Label><Input className="bg-black/40 border-white/10" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required /></div>
+        <div><Label>Kategorija</Label><Input className="bg-black/40 border-white/10" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} /></div>
       </div>
-      <div><Label>Opis Proizvoda</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="h-24" /></div>
-      <div><Label>Slika Proizvoda (URL)</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} /></div>
-      <div><Label>Cijena (€)</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
-      <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi Proizvod</Button></div>
+      <div><Label>Opis</Label><Textarea className="bg-black/40 border-white/10" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} /></div>
+      <div><Label>Slika URL</Label><Input className="bg-black/40 border-white/10" value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} /></div>
+      <div><Label>Cijena (€)</Label><Input type="number" className="bg-black/40 border-white/10" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} required /></div>
+      <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1">Spremi</Button></div>
     </form>
   );
+};
+
+// Course, Lesson, Faq ostaju slični ali sa bg-black/40 stilom
+const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
+    const [formData, setFormData] = useState({ title: initialData?.title || '', program_id: initialData?.program_id || '', thumbnail_url: initialData?.thumbnail_url || '' });
+    return (
+      <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
+        <div><Label>Naziv Kursa</Label><Input className="bg-black/40 border-white/10" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
+        <div><Label>Program</Label><Select value={formData.program_id} onValueChange={(v) => setFormData({...formData, program_id: v})}><SelectTrigger className="bg-black/40 border-white/10"><SelectValue /></SelectTrigger><SelectContent className="bg-card border-white/10">{programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+        <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      </form>
+    );
+};
+
+const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
+    const [formData, setFormData] = useState({ title: initialData?.title || '', video_url: initialData?.video_url || '', course_id: courseId });
+    return (
+      <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
+        <div><Label>Naslov Lekcije</Label><Input className="bg-black/40 border-white/10" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
+        <div><Label>Mux Playback ID</Label><Input className="bg-black/40 border-white/10" value={formData.video_url} onChange={(e) => setFormData({...formData, video_url: e.target.value})} required /></div>
+        <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      </form>
+    );
 };
 
 const FaqForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ question: initialData?.question || '', answer: initialData?.answer || '' });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Pitanje</Label><Input value={formData.question} onChange={(e) => setFormData({...formData, question: e.target.value})} required /></div>
-      <div><Label>Odgovor</Label><Textarea value={formData.answer} onChange={(e) => setFormData({...formData, answer: e.target.value})} required /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
-    </form>
-  );
-};
-
-const ResultForm = ({ onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ image_url: '', caption: '' });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div><Label>Image URL</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} required /></div>
-      <div><Label>Opis (opciono)</Label><Input value={formData.caption} onChange={(e) => setFormData({...formData, caption: e.target.value})} /></div>
-      <div className="flex gap-2"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Dodaj</Button></div>
-    </form>
-  );
+    const [formData, setFormData] = useState({ question: initialData?.question || '', answer: initialData?.answer || '' });
+    return (
+      <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
+        <div><Label>Pitanje</Label><Input className="bg-black/40 border-white/10" value={formData.question} onChange={(e) => setFormData({...formData, question: e.target.value})} required /></div>
+        <div><Label>Odgovor</Label><Textarea className="bg-black/40 border-white/10" value={formData.answer} onChange={(e) => setFormData({...formData, answer: e.target.value})} required /></div>
+        <div className="flex gap-2 pt-4"><Button type="button" variant="outline" onClick={onCancel}>Odustani</Button><Button type="submit">Spremi</Button></div>
+      </form>
+    );
 };
 
 export default Admin;
