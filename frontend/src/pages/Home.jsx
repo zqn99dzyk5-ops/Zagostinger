@@ -81,29 +81,33 @@ const Home = () => {
   }
 
   return (
-    // FIX: relative z-10 stavlja sadržaj iznad pozadinskih sjena
+    // GLAVNI KONTEJNER
     <div className="relative z-10 min-h-screen text-white font-sans overflow-x-hidden selection:bg-pink-500/30">
       
       {/* --- POZADINA I EFEKTI --- */}
       <div className="fixed inset-0 bg-[#050505] -z-50" />
       
-      {/* GLOW EFEKTI (Narandžasta & Roza) */}
+      {/* GLOW EFEKTI (Iza sadržaja) */}
       <div className="fixed inset-0 pointer-events-none -z-40 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-orange-500/10 blur-[120px] rounded-full opacity-40" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-pink-500/10 blur-[120px] rounded-full opacity-40" />
       </div>
 
-      {/* 1. TOP BANNER (Bez rastezanja) */}
-      {/* mt-20 osigurava da banner krene ISPOD navbara */}
-      <div className="w-full relative mt-20 border-b border-white/5">
+      {/* 1. TOP BANNER (FIXED - Od ćoška do ćoška + Sjena) */}
+      {/* mt-20 da se spusti ispod navbara. overflow-hidden da ne curi sa strane. */}
+      <div className="w-full relative mt-20 border-b border-white/5 overflow-hidden shadow-2xl">
         <img 
           src={settings.hero_image_url || "https://i.ibb.co/Ktb6Frq/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"}
-          // KLJUČNO: w-full (puna širina) i h-auto (automatska visina prema slici)
-          // Ovako se slika nikad neće deformisati, već će zadržati svoje originalne proporcije
-          className="w-full h-auto opacity-70 block"
+          // w-full: Širina 100% ekrana (od ćoška do ćoška)
+          // h-auto: Prirodna visina (ne rasteže se)
+          // object-cover: Osigurava popunjavanje bez deformacije
+          className="w-full h-auto object-cover opacity-80 block"
           alt="Banner"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#050505]" />
+        
+        {/* --- CRNA SJENA / PRELAZ NA DNU --- */}
+        {/* Ovo pravi prelaz sa slike na ostatak sajta */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/20 to-transparent" />
       </div>
 
       {/* 2. HERO SEKCIJA */}
@@ -167,7 +171,7 @@ const Home = () => {
             {programs.map((p) => (
               <div key={p.id} className="bg-[#0f0f0f] border border-white/10 rounded-3xl overflow-hidden hover:border-pink-500/30 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-pink-500/10 group">
                 
-                {/* Thumbnail */}
+                {/* Thumbnail Programa */}
                 <div className="h-56 overflow-hidden relative shrink-0">
                   <img 
                     src={p.thumbnail_url || p.image_url || '/placeholder.jpg'} 
@@ -259,7 +263,7 @@ const Home = () => {
       <section className="py-24 bg-black border-t border-white/5 relative z-10">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
           {[
-            { label: 'Aktivnih Članova', value: '700+' },
+            { label: 'Aktivnih Članova', value: '1,500+' },
             { label: 'Uspješnih Projekata', value: '120+' },
             { label: 'Zemalja', value: '15+' },
             { label: 'Ocena', value: '4.9/5' }
