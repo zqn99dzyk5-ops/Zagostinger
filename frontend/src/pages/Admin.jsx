@@ -5,7 +5,7 @@ import {
   Plus, Trash2, Edit, Save, Loader2, MessageCircle, 
   FileText, Image, Video, DollarSign, Palette, GraduationCap,
   PlayCircle, Clock, ChevronDown, ChevronUp, Eye, EyeOff, X,
-  Link as LinkIcon, Mail, Phone, Globe
+  Link as LinkIcon, Mail, Phone, Globe, Instagram, Youtube, Twitter
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -437,6 +437,7 @@ const Admin = () => {
 
           <TabsContent value="settings" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
+              {/* BRANDING */}
               <Card className="luxury-card">
                 <CardHeader><CardTitle className="flex items-center gap-2"><Palette className="w-5 h-5" /> Branding</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -445,6 +446,8 @@ const Admin = () => {
                   <div><Label>Favicon URL</Label><Input value={settings.favicon_url || ''} onChange={(e) => setSettings({...settings, favicon_url: e.target.value})} /></div>
                 </CardContent>
               </Card>
+
+              {/* HERO & MEDIA */}
               <Card className="luxury-card">
                 <CardHeader><CardTitle className="flex items-center gap-2"><Video className="w-5 h-5" /> Hero & Media (Mux)</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -460,18 +463,69 @@ const Admin = () => {
                   <div><Label>Subheadline</Label><Textarea value={settings.hero_subheadline || ''} onChange={(e) => setSettings({...settings, hero_subheadline: e.target.value})} /></div>
                 </CardContent>
               </Card>
+
+              {/* SOCIAL MEDIA - PROŠIRENO */}
               <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Social & Contact</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><Globe className="w-5 h-5" /> Social Media</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div><Label>Discord Link</Label><Input value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} /></div>
-                  <div><Label>Contact Email</Label><Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="flex items-center gap-2"><Instagram className="w-4 h-4" /> Instagram URL</Label>
+                      <Input value={settings.instagram_url || ''} onChange={(e) => setSettings({...settings, instagram_url: e.target.value})} placeholder="https://instagram.com/..." />
+                    </div>
+                    <div>
+                      <Label className="flex items-center gap-2"><Globe className="w-4 h-4" /> TikTok URL</Label>
+                      <Input value={settings.tiktok_url || ''} onChange={(e) => setSettings({...settings, tiktok_url: e.target.value})} placeholder="https://tiktok.com/@..." />
+                    </div>
+                    <div>
+                      <Label className="flex items-center gap-2"><Youtube className="w-4 h-4" /> YouTube URL</Label>
+                      <Input value={settings.youtube_url || ''} onChange={(e) => setSettings({...settings, youtube_url: e.target.value})} placeholder="https://youtube.com/..." />
+                    </div>
+                    <div>
+                      <Label className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Discord Link</Label>
+                      <Input value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
+
+              {/* KONTAKT I FOOTER - NOVO */}
               <Card className="luxury-card">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5" /> Vidljivost</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Kontakt & Footer</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between"><Label>Prikaži Rezultate</Label><Switch checked={settings.show_results_section} onCheckedChange={(v) => setSettings({...settings, show_results_section: v})} /></div>
-                  <div className="flex items-center justify-between"><Label>Prikaži FAQ</Label><Switch checked={settings.show_faq_section} onCheckedChange={(v) => setSettings({...settings, show_faq_section: v})} /></div>
+                  <div>
+                    <Label className="flex items-center gap-2"><Mail className="w-4 h-4" /> Contact Email</Label>
+                    <Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Privacy Policy URL</Label>
+                      <Input value={settings.privacy_policy_url || ''} onChange={(e) => setSettings({...settings, privacy_policy_url: e.target.value})} placeholder="/privacy" />
+                    </div>
+                    <div>
+                      <Label>Terms of Service URL</Label>
+                      <Input value={settings.terms_url || ''} onChange={(e) => setSettings({...settings, terms_url: e.target.value})} placeholder="/terms" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* VIDLJIVOST */}
+              <Card className="luxury-card">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Eye className="w-5 h-5" /> Vidljivost Sekcija</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <Label>Prikaži Rezultate na Home</Label>
+                    <Switch checked={settings.show_results_section} onCheckedChange={(v) => setSettings({...settings, show_results_section: v})} />
+                  </div>
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <Label>Prikaži FAQ na Home</Label>
+                    <Switch checked={settings.show_faq_section} onCheckedChange={(v) => setSettings({...settings, show_faq_section: v})} />
+                  </div>
+                   <div className="flex items-center justify-between">
+                    <Label>Prikaži Shop na Home</Label>
+                    <Switch checked={settings.show_shop_section} onCheckedChange={(v) => setSettings({...settings, show_shop_section: v})} />
+                  </div>
                 </CardContent>
               </Card>
             </div>
