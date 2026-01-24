@@ -11,11 +11,11 @@ const Shop = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(null);
 
-  // POVLAČENJE PROIZVODA IZ BAZE
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get('/api/public/shop/products');
+        // ISPRAVLJENO: Putanja sada odgovara tvom backendu
+        const res = await axios.get('/api/shop/products');
         setProducts(res.data);
       } catch (err) {
         console.error("Shop load error:", err);
@@ -38,7 +38,6 @@ const Shop = () => {
   };
 
   return (
-    // Z-INDEX FIX I OVDE
     <div className="relative z-50 bg-[#050505] min-h-screen text-white pt-32 px-6 font-sans">
       <div className="max-w-7xl mx-auto">
         
@@ -52,7 +51,7 @@ const Shop = () => {
 
         {/* GRID PROIZVODA */}
         {products.length === 0 ? (
-          <div className="text-center text-white/40 py-20">Nema aktivnih proizvoda u prodavnici.</div>
+          <div className="text-center text-white/40 py-20 text-xl">Trenutno nema proizvoda. Dodaj ih u Admin Panelu.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {products.map((p) => (
@@ -66,6 +65,7 @@ const Shop = () => {
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-orange-500">
                       <Zap className="w-8 h-8" />
                     </div>
+                    {/* Badge ako postoji u bazi */}
                     {p.badge && (
                       <span className="px-3 py-1 rounded-full bg-orange-600/20 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-600/30">
                         {p.badge}
