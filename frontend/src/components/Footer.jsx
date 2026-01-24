@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Youtube, MessageCircle, Facebook, Mail, Chrome } from 'lucide-react';
+import { Instagram, Youtube, MessageCircle, Facebook, Mail, Chrome, Globe } from 'lucide-react';
 import { useSettings } from '../lib/settings';
 
 const Footer = () => {
@@ -17,15 +17,27 @@ const Footer = () => {
           {/* Logo i Brand Info */}
           <div className="md:col-span-2 space-y-8">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-pink-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                <span className="text-white font-bold text-2xl">
-                  {settings?.site_name?.charAt(0) || 'C'}
-                </span>
-              </div>
+              {settings?.logo_url ? (
+                /* DINAMIČNI LOGO SLIKA */
+                <img 
+                  src={settings.logo_url} 
+                  alt={settings.site_name} 
+                  className="h-12 w-auto object-contain"
+                />
+              ) : (
+                /* FALLBACK GRADIENT KVADRAT */
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-pink-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                  <span className="text-white font-bold text-2xl">
+                    {settings?.site_name?.charAt(0) || 'C'}
+                  </span>
+                </div>
+              )}
+              
               <span className="font-heading text-2xl font-bold tracking-tighter text-white">
                 {settings?.site_name || 'Continental Academy'}
               </span>
             </div>
+            
             <p className="text-muted-foreground text-base leading-relaxed max-w-md">
               {settings?.footer_text || 'Pridruži se eliti digitalnih preduzetnika. Nauči strategije koje donose rezultate i transformiši svoju budućnost.'}
             </p>
@@ -66,6 +78,7 @@ const Footer = () => {
             <div className="flex flex-wrap gap-4">
               {[
                 { icon: Instagram, url: settings?.instagram_url, color: 'hover:border-pink-500/50 hover:text-pink-500' },
+                { icon: Globe, url: settings?.tiktok_url, color: 'hover:border-white/50 hover:text-white' },
                 { icon: Youtube, url: settings?.youtube_url, color: 'hover:border-red-500/50 hover:text-red-500' },
                 { icon: MessageCircle, url: settings?.discord_invite_url, color: 'hover:border-indigo-500/50 hover:text-indigo-500' },
                 { icon: Facebook, url: settings?.facebook_url, color: 'hover:border-blue-500/50 hover:text-blue-500' }
@@ -87,7 +100,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-xs text-muted-foreground tracking-wide">
-            © {new Date().getFullYear()} <span className="text-white font-medium">{settings?.site_name}</span>. Sva prava zadržana.
+            © {new Date().getFullYear()} <span className="text-white font-medium">{settings?.site_name || 'Continental Academy'}</span>. Sva prava zadržana.
           </div>
           
           <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
