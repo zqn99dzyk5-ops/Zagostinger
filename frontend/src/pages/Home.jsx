@@ -81,30 +81,32 @@ const Home = () => {
   }
 
   return (
+    // FIX: relative z-10 stavlja sadržaj iznad pozadinskih sjena
     <div className="relative z-10 min-h-screen text-white font-sans overflow-x-hidden selection:bg-pink-500/30">
       
-      {/* --- POZADINA I SUITILNI EFEKTI --- */}
+      {/* --- POZADINA I EFEKTI --- */}
       <div className="fixed inset-0 bg-[#050505] -z-50" />
       
-      {/* Nježniji Glow efekti (Orange & Pink) */}
+      {/* GLOW EFEKTI (Narandžasta & Roza) */}
       <div className="fixed inset-0 pointer-events-none -z-40 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-orange-500/10 blur-[120px] rounded-full opacity-40" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-pink-500/10 blur-[120px] rounded-full opacity-40" />
       </div>
 
-      {/* 1. TOP BANNER (Full Stretch - Rastegnut) */}
-      <div className="w-full h-[350px] md:h-[450px] relative overflow-hidden border-b border-white/5">
+      {/* 1. TOP BANNER (Bez rastezanja) */}
+      {/* mt-20 osigurava da banner krene ISPOD navbara */}
+      <div className="w-full relative mt-20 border-b border-white/5">
         <img 
           src={settings.hero_image_url || "https://i.ibb.co/Ktb6Frq/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"}
-          // KLJUČNO: object-fill rasteže sliku da popuni svaki piksel, bez obzira na proporcije
-          className="w-full h-full object-fill opacity-70"
+          // KLJUČNO: w-full (puna širina) i h-auto (automatska visina prema slici)
+          // Ovako se slika nikad neće deformisati, već će zadržati svoje originalne proporcije
+          className="w-full h-auto opacity-70 block"
           alt="Banner"
         />
-        {/* Blagi gradient da prelaz u crno bude ljepši */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#050505]" />
       </div>
 
-      {/* 2. HERO SEKCIJA (Manji fontovi, ljepše boje) */}
+      {/* 2. HERO SEKCIJA */}
       <section className="max-w-7xl mx-auto px-6 py-16 md:py-20 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           
@@ -114,7 +116,6 @@ const Home = () => {
               {settings.hero_headline ? settings.hero_headline : (
                 <>
                   Continental <br />
-                  {/* Gradijent tekst (Roze-Narandžasto) */}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500">
                     Academy
                   </span>
@@ -128,7 +129,6 @@ const Home = () => {
             
             <Button 
               onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
-              // NOVI DUGME STIL: Gradijent Orange->Pink
               className="bg-gradient-to-r from-orange-500 to-pink-600 hover:opacity-90 text-white px-8 py-6 rounded-full font-bold text-lg shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all transform hover:scale-105"
             >
               KRENI ODMAH <ArrowRight className="ml-2 w-5 h-5" />
@@ -137,7 +137,7 @@ const Home = () => {
 
           {/* Mux Video - Desno */}
           <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-black aspect-video group">
-             {/* Ukrasni obrub oko videa */}
+             {/* Glow okvir oko videa */}
             <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-pink-600 rounded-3xl opacity-20 group-hover:opacity-40 transition duration-500 blur-sm"></div>
             
             <div className="relative w-full h-full rounded-3xl overflow-hidden bg-black">
@@ -145,7 +145,7 @@ const Home = () => {
                 playbackId={settings.hero_video_url || ""} 
                 metadata={{ video_title: 'Continental Intro' }}
                 streamType="on-demand"
-                primaryColor="#ec4899" // Roza boja playera
+                primaryColor="#ec4899"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -198,8 +198,7 @@ const Home = () => {
                   <Button 
                     onClick={() => handleSubscribe(p.id)} 
                     disabled={loadingPay === p.id}
-                    // Dugme u kartici: Bijelo sa hover efektom u boji
-                    className="w-full py-6 rounded-xl bg-white text-black hover:bg-gradient-to-r hover:from-orange-500 hover:to-pink-600 hover:text-white font-bold text-base transition-all shadow-lg"
+                    className="w-full py-6 rounded-xl bg-white text-black hover:bg-gradient-to-r hover:from-orange-500 hover:to-pink-600 hover:text-white font-bold text-base transition-all shadow-lg uppercase tracking-wide"
                   >
                     {loadingPay === p.id ? "PROCESIRANJE..." : "PRIDRUŽI SE"}
                   </Button>
@@ -218,10 +217,9 @@ const Home = () => {
             <div key={faq.id || index} className="border border-white/10 rounded-2xl bg-[#0a0a0a] overflow-hidden hover:bg-white/[0.02] transition-colors">
               <button 
                 onClick={() => setActiveFaq(activeFaq === index ? null : index)} 
-                className="w-full p-6 text-left flex justify-between items-center font-bold text-lg text-white"
+                className="w-full p-6 text-left flex justify-between items-center font-bold text-lg text-white group"
               >
-                {faq.question}
-                {/* Ikona se mijenja u roze kad je aktivna */}
+                <span className="group-hover:text-pink-500 transition-colors">{faq.question}</span>
                 <span className={`bg-white/5 p-2 rounded-full transition-colors ${activeFaq === index ? 'text-pink-500 bg-pink-500/10' : 'text-white/50'}`}>
                   {activeFaq === index ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 </span>
@@ -236,11 +234,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 5. ZAJEDNICA (Roze-Narandžasti Box) */}
+      {/* 5. ZAJEDNICA */}
       <section className="py-20 px-6 relative z-10">
         <div className="max-w-7xl mx-auto relative overflow-hidden rounded-[3rem] p-12 md:p-20 flex flex-col md:flex-row items-center justify-between gap-10">
           
-          {/* Pozadina boxa - Gradijent */}
           <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-pink-700 opacity-90" />
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
 
@@ -262,7 +259,7 @@ const Home = () => {
       <section className="py-24 bg-black border-t border-white/5 relative z-10">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
           {[
-            { label: 'Aktivnih Članova', value: '1,500+' },
+            { label: 'Aktivnih Članova', value: '700+' },
             { label: 'Uspješnih Projekata', value: '120+' },
             { label: 'Zemalja', value: '15+' },
             { label: 'Ocena', value: '4.9/5' }
