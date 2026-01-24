@@ -11,21 +11,19 @@ import { toast } from 'sonner';
 import MuxPlayer from '@mux/mux-player-react';
 
 const Home = () => {
-  // --- STATE VARIJABLE ---
+  // --- STATE ---
   const [programs, setPrograms] = useState([]);
   const [faqs, setFaqs] = useState([]);
   const [results, setResults] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
-  
-  // State za interakcije
   const [activeFaq, setActiveFaq] = useState(null);
   const [loadingPay, setLoadingPay] = useState(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // --- UČITAVANJE PODATAKA (Koristimo tvoj API lib) ---
+  // --- API CALLS (Tvoja originalna logika) ---
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -37,7 +35,6 @@ const Home = () => {
           settingsAPI.get()
         ]);
         
-        // Provjera da li su podaci nizovi pre setovanja
         setPrograms(Array.isArray(programsRes?.data) ? programsRes.data : []);
         setFaqs(Array.isArray(faqsRes?.data) ? faqsRes.data : []);
         setResults(Array.isArray(resultsRes?.data) ? resultsRes.data : []);
@@ -49,8 +46,7 @@ const Home = () => {
           analyticsAPI.trackEvent({ event_type: 'page_view', page: 'home', metadata: {} });
         }
       } catch (error) {
-        console.error('Greška pri učitavanju podataka:', error);
-        toast.error('Problem sa povezivanjem na server');
+        console.error('Greška:', error);
       } finally {
         setLoading(false);
       }
@@ -58,27 +54,22 @@ const Home = () => {
     loadData();
   }, []);
 
-  // --- FUNKCIJA ZA PLAĆANJE ---
   const handleSubscribe = async (programId) => {
     if (!user) {
       navigate('/login');
       return;
     }
-    
     setLoadingPay(programId);
     try {
       const response = await paymentsAPI.createSubscriptionCheckout(programId);
-      if (response?.data?.url) {
-        window.location.href = response.data.url;
-      }
+      if (response?.data?.url) window.location.href = response.data.url;
     } catch (error) {
-      toast.error('Greška pri pokretanju plaćanja');
+      toast.error('Greška pri plaćanju');
     } finally {
       setLoadingPay(null);
     }
   };
 
-  // --- LOADING EKRAN ---
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505] text-white">
@@ -87,28 +78,37 @@ const Home = () => {
     );
   }
 
-  // --- RENDERING (NOVI DIZAJN) ---
   return (
-    // KLJUČNO: relative z-50 stavlja tvoj sadržaj IZNAD onih CSS sjena koje su ti pravile problem
-    <div className="relative z-50 bg-[#050505] min-h-screen text-white font-sans overflow-x-hidden">
+    // FIX: Promijenjeno sa z-50 na z-10. 
+    // Ovo osigurava da je iznad sjena (z-1), ali ISPOD Navbara (koji je vjerojatno z-40 ili z-50).
+    <div className="relative z-10 min-h-screen text-white font-sans overflow-x-hidden selection:bg-orange-500/30">
       
-      {/* 1. TOP BANNER SEKCIJA */}
+      {/* --- POZADINA I SJENE --- */}
+      {/* Crna pozadina u minus sloju */}
+      <div className="fixed inset-0 bg-[#050505] -z-20" />
+      
+      {/* Glow efekti u minus sloju (ne smetaju klikanju) */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-orange-600/10 blur-[120px] rounded-full opacity-60" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-pink-600/10 blur-[120px] rounded-full opacity-50" />
+      </div>
+
+      {/* 1. TOP BANNER (Ispod Navbara) */}
       <div className="w-full h-[300px] md:h-[450px] relative overflow-hidden border-b border-white/5">
         <img 
-          src={settings.hero_image_url || "https://images.unsplash.com/photo-1684488624316-774ea1824d97?auto=format&fit=crop&q=80"}
-          className="w-full h-full object-cover opacity-60"
+          src={settings.hero_image_url || "https://i.ibb.co/Ktb6Frq/b2ec6e8f-c260-4f94-9c9b-24a67bb65af5.jpg"}
+          className="w-full h-full object-cover opacity-95"
           alt="Banner"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#050505]" />
       </div>
 
-      {/* 2. HERO + MUX VIDEO SEKCIJA */}
-      <section className="max-w-7xl mx-auto px-6 py-16 md:py-24 relative z-50">
+      {/* 2. HERO + MUX VIDEO */}
+      <section className="max-w-7xl mx-auto px-6 py-16 md:py-24 relative">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          
-          {/* LEVO: Hero Tekst */}
+          {/* Tekst */}
           <div className="text-left">
-            <h1 className="text-5xl md:text-[8rem] font-black tracking-tighter leading-[0.9] uppercase mb-8 text-white">
+            <h1 className="text-5xl md:text-[8rem] font-black tracking-tighter leading-[0.9] uppercase mb-8 text-white drop-shadow-2xl">
               {settings.hero_headline ? settings.hero_headline : (
                 <>
                   Continental <br />
@@ -116,24 +116,19 @@ const Home = () => {
                 </>
               )}
             </h1>
-            
-            <p className="text-white/50 text-xl uppercase tracking-widest mb-10 font-bold">
+            <p className="text-white/60 text-xl uppercase tracking-widest mb-10 font-bold">
               {settings.hero_subheadline || 'Dominacija u digitalnom svetu.'}
             </p>
-            
-            <div className="flex gap-4">
-              <Button 
-                onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-10 py-8 rounded-2xl font-black text-xl uppercase shadow-xl h-auto"
-              >
-                KRENI ODMAH
-              </Button>
-            </div>
+            <Button 
+              onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
+              className="bg-orange-600 hover:bg-orange-700 text-white px-10 py-8 rounded-2xl font-black text-xl uppercase shadow-[0_0_40px_rgba(234,88,12,0.4)] h-auto border border-orange-400/20"
+            >
+              KRENI ODMAH
+            </Button>
           </div>
 
-          {/* DESNO: Mux Video Player */}
-          <div className="rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black aspect-video relative z-50">
-            {/* Ako nema videa u settings, koristi placeholder ID ili prazan string */}
+          {/* Mux Video */}
+          <div className="rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black aspect-video relative">
             <MuxPlayer
               playbackId={settings.hero_video_url || ""} 
               metadata={{ video_title: 'Continental Intro' }}
@@ -145,18 +140,17 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 3. PROGRAMI SEKCIJA */}
-      <section id="programs" className="py-32 max-w-7xl mx-auto px-6 relative z-50">
-        <h2 className="text-5xl font-black mb-16 uppercase tracking-tighter text-white">Programi</h2>
+      {/* 3. PROGRAMI */}
+      <section id="programs" className="py-32 max-w-7xl mx-auto px-6 relative">
+        <h2 className="text-5xl font-black mb-16 uppercase tracking-tighter text-white drop-shadow-lg">Programi</h2>
         
         {programs.length === 0 ? (
           <div className="text-center text-white/50 py-10">Trenutno nema aktivnih programa.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {programs.map((p) => (
-              <div key={p.id} className="bg-[#0f0f0f] border border-white/10 rounded-[2.5rem] overflow-hidden group hover:border-orange-500/50 transition-all flex flex-col">
-                
-                {/* Slika Programa */}
+              <div key={p.id} className="bg-[#0f0f0f]/80 backdrop-blur-md border border-white/10 rounded-[2.5rem] overflow-hidden group hover:border-orange-500/50 transition-all flex flex-col hover:shadow-[0_0_50px_rgba(234,88,12,0.1)]">
+                {/* Thumbnail */}
                 <div className="h-64 overflow-hidden relative shrink-0">
                   <img 
                     src={p.thumbnail_url || p.image_url || '/placeholder.jpg'} 
@@ -170,7 +164,6 @@ const Home = () => {
                   <h3 className="text-2xl font-black uppercase tracking-tight text-white">{p.name}</h3>
                   <div className="text-4xl font-black text-orange-600">€{p.price}</div>
                   
-                  {/* Features */}
                   <ul className="space-y-3 my-4 flex-1">
                     {p.features?.map((f, i) => (
                       <li key={i} className="flex items-start gap-3 text-white/70 text-sm font-bold">
@@ -185,7 +178,7 @@ const Home = () => {
                     disabled={loadingPay === p.id}
                     className="w-full py-8 rounded-2xl bg-white text-black hover:bg-orange-600 hover:text-white font-black text-lg transition-all uppercase h-auto"
                   >
-                    {loadingPay === p.id ? "PROCESIRANJE..." : "PRIDRUŽI SE"}
+                    {loadingPay === p.id ? "..." : "PRIDRUŽI SE"}
                   </Button>
                 </div>
               </div>
@@ -194,12 +187,12 @@ const Home = () => {
         )}
       </section>
 
-      {/* 4. FAQ SEKCIJA */}
-      <section className="py-24 max-w-4xl mx-auto px-6 relative z-50">
+      {/* 4. FAQ */}
+      <section className="py-24 max-w-4xl mx-auto px-6 relative">
         <h2 className="text-4xl font-black mb-12 uppercase text-center tracking-tighter text-orange-600">FAQ</h2>
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <div key={faq.id || index} className="border border-white/10 rounded-2xl bg-[#0a0a0a]">
+            <div key={faq.id || index} className="border border-white/10 rounded-2xl bg-[#0a0a0a]/60 backdrop-blur-sm">
               <button 
                 onClick={() => setActiveFaq(activeFaq === index ? null : index)} 
                 className="w-full p-6 text-left flex justify-between items-center font-black text-lg uppercase text-white hover:text-orange-500 transition-colors"
@@ -217,28 +210,28 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 5. DISCORD ZAJEDNICA */}
-      <section className="py-20 px-6 relative z-50">
-        <div className="max-w-7xl mx-auto bg-orange-600 rounded-[3.5rem] p-12 md:p-20 flex flex-col md:flex-row items-center justify-between gap-10">
+      {/* 5. ZAJEDNICA / DISCORD */}
+      <section className="py-20 px-6 relative">
+        <div className="max-w-7xl mx-auto bg-gradient-to-r from-orange-600 to-orange-700 rounded-[3.5rem] p-12 md:p-20 flex flex-col md:flex-row items-center justify-between gap-10 shadow-[0_0_80px_rgba(234,88,12,0.3)]">
           <div className="text-center md:text-left">
-            <h2 className="text-5xl md:text-[6rem] font-black uppercase tracking-tighter mb-4 text-black leading-none italic">Zajednica</h2>
+            <h2 className="text-5xl md:text-[6rem] font-black uppercase tracking-tighter mb-4 text-black leading-none italic">Discord Server</h2>
             <p className="text-black/80 text-xl md:text-2xl font-black uppercase tracking-widest">
-              Discord • 1,500+ Članova
+              Discord • 1000+ Članova
             </p>
           </div>
           <a href={settings.discord_invite_url || '#'} target="_blank" rel="noreferrer">
             <Button className="bg-black text-white hover:bg-white hover:text-black px-12 py-10 rounded-3xl font-black text-xl md:text-2xl uppercase shadow-2xl transition-all h-auto">
-              <MessageSquare className="mr-4 w-8 h-8" /> UĐI U GRUPU
+              <MessageSquare className="mr-4 w-8 h-8" /> Pridruži se
             </Button>
           </a>
         </div>
       </section>
 
-      {/* 6. STATS SEKCIJA */}
-      <section className="py-32 bg-black border-t border-white/5 relative z-50">
+      {/* 6. STATS (Iznad footera) */}
+      <section className="py-32 bg-black/80 backdrop-blur-xl border-t border-white/5 relative">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
           {[
-            { label: 'Aktivnih Članova', value: '1,500+' },
+            { label: 'Aktivnih Članova', value: '900+' },
             { label: 'Uspješnih Projekata', value: '120+' },
             { label: 'Zemalja', value: '15+' },
             { label: 'Ocena', value: '4.9/5' }
