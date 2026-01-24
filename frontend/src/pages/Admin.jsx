@@ -63,6 +63,7 @@ const Admin = () => {
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [showUserCoursesModal, setShowUserCoursesModal] = useState(false);
+  
   const [editingItem, setEditingItem] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -98,7 +99,7 @@ const Admin = () => {
       setResults(resultsRes?.data || []);
       setSettings(Array.isArray(settingsRes?.data) ? settingsRes.data[0] : (settingsRes?.data || {}));
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Data loading error:', error);
       toast.error('Greška pri učitavanju podataka');
     } finally {
       setLoading(false);
@@ -108,10 +109,10 @@ const Admin = () => {
   const handleUpdateSettings = async () => {
     try {
       await settingsAPI.update(settings);
-      toast.success('Postavke ažurirane');
+      toast.success('Postavke uspješno ažurirane');
     } catch (error) {
-      console.error('Settings Update Error:', error);
-      toast.error('Greška pri ažuriranju! Provjeri konzolu.');
+      console.error('Settings error:', error);
+      toast.error('Greška! Vjerovatno nedostaju kolone u bazi.');
     }
   };
 
@@ -120,9 +121,7 @@ const Admin = () => {
       await adminAPI.updateUserRole(userId, role);
       setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
       toast.success('Uloga ažurirana');
-    } catch (error) {
-      toast.error('Greška pri promeni uloge');
-    }
+    } catch (error) { toast.error('Greška pri promjeni uloge'); }
   };
 
   const toggleUserCourse = async (courseId, hasAccess) => {
@@ -145,15 +144,17 @@ const Admin = () => {
     } catch (e) { console.error(e); }
   };
 
+  // --- SAVE FUNCTIONS ---
   const saveProgram = async (data) => {
     try {
       editingItem?.id ? await programsAPI.update(editingItem.id, data) : await programsAPI.create(data);
-      loadAllData(); setShowProgramModal(false); toast.success('Program sačuvan');
+      loadAllData(); setShowProgramModal(false); toast.success('Plan sačuvan');
     } catch (e) { toast.error('Greška pri spremanju plana'); }
   };
 
   const saveCourse = async (data) => {
     try {
+      if (!data.program_id) { toast.error("Izaberi program za kurs!"); return; }
       editingItem?.id ? await coursesAPI.update(editingItem.id, data) : await coursesAPI.create(data);
       loadAllData(); setShowCourseModal(false); toast.success('Kurs sačuvan');
     } catch (e) { toast.error('Greška pri spremanju kursa'); }
@@ -181,48 +182,52 @@ const Admin = () => {
     } catch (e) { toast.error('Greška pri spremanju FAQ'); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#050505]"><Loader2 className="animate-spin text-orange-500 w-12 h-12" /></div>;
+  const saveResult = async (data) => {
+    try {
+      await resultsAPI.create(data);
+      loadAllData(); setShowResultModal(false); toast.success('Rezultat sačuvan');
+    } catch (e) { toast.error('Greška pri spremanju rezultata'); }
+  };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <Loader2 className="animate-spin text-orange-500 w-12 h-12" />
+    </div>
+  );
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#050505] text-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+        <div className="mb-10">
           <h1 className="text-4xl font-black uppercase italic tracking-tighter">Admin Control Center</h1>
-          <p className="text-white/40 font-bold uppercase tracking-widest text-sm">Upravljanje Continental Akademijom</p>
-        </motion.div>
+          <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Management & Strategy</p>
+        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="bg-white/5 border border-white/10 p-1 rounded-2xl flex-wrap h-auto">
             <TabsTrigger value="overview" className="gap-2 uppercase font-black text-xs italic"><BarChart3 className="w-4 h-4" /> Pregled</TabsTrigger>
             <TabsTrigger value="users" className="gap-2 uppercase font-black text-xs italic"><Users className="w-4 h-4" /> Korisnici</TabsTrigger>
             <TabsTrigger value="courses" className="gap-2 uppercase font-black text-xs italic"><GraduationCap className="w-4 h-4" /> Kursevi</TabsTrigger>
-            <TabsTrigger value="programs" className="gap-2 uppercase font-black text-xs italic"><BookOpen className="w-4 h-4" /> Programi</TabsTrigger>
+            <TabsTrigger value="programs" className="gap-2 uppercase font-black text-xs italic"><BookOpen className="w-4 h-4" /> Planovi</TabsTrigger>
             <TabsTrigger value="shop" className="gap-2 uppercase font-black text-xs italic"><ShoppingBag className="w-4 h-4" /> Shop</TabsTrigger>
             <TabsTrigger value="content" className="gap-2 uppercase font-black text-xs italic"><FileText className="w-4 h-4" /> Sadržaj</TabsTrigger>
             <TabsTrigger value="settings" className="gap-2 uppercase font-black text-xs italic"><Settings className="w-4 h-4" /> Postavke</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview">
             <div className="grid md:grid-cols-4 gap-6">
               {[
-                { label: 'Korisnika', val: analytics?.total_users, icon: Users, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-                { label: 'Aktivnih Pretplata', val: analytics?.total_subscriptions, icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10' },
-                { label: 'Kurseva', val: courses.length, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                { label: 'Programa', val: programs.length, icon: BookOpen, color: 'text-purple-500', bg: 'bg-purple-500/10' }
+                { label: 'Korisnika', val: analytics?.total_users, icon: Users, color: 'text-orange-500' },
+                { label: 'Pretplata', val: analytics?.total_subscriptions, icon: DollarSign, color: 'text-green-500' },
+                { label: 'Kurseva', val: courses.length, icon: GraduationCap, color: 'text-blue-500' },
+                { label: 'Planova', val: programs.length, icon: BookOpen, color: 'text-purple-500' }
               ].map((item, i) => (
-                <Card key={i} className="bg-white/5 border-white/10 backdrop-blur-md">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl ${item.bg} flex items-center justify-center`}>
-                        <item.icon className={item.color} />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-black text-white">{item.val || 0}</p>
-                        <p className="text-xs uppercase font-black text-white/40 tracking-widest">{item.label}</p>
-                      </div>
-                    </div>
-                  </CardContent>
+                <Card key={i} className="bg-white/5 border-white/10 p-6">
+                  <div className="flex items-center gap-4">
+                    <item.icon className={item.color} />
+                    <div><p className="text-2xl font-black">{item.val || 0}</p><p className="text-[10px] uppercase font-bold text-white/40 tracking-widest">{item.label}</p></div>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -230,218 +235,161 @@ const Admin = () => {
 
           {/* USERS */}
           <TabsContent value="users">
-            <Card className="bg-white/5 border-white/10 backdrop-blur-md">
-              <CardHeader><CardTitle className="uppercase font-black italic">Upravljanje korisnicima</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow className="border-white/10"><TableHead>Ime</TableHead><TableHead>Email</TableHead><TableHead>Uloga</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id} className="border-white/5">
-                        <TableCell className="font-bold">{user.name}</TableCell>
-                        <TableCell className="text-white/60">{user.email}</TableCell>
-                        <TableCell>
-                          <Select value={user.role} onValueChange={(v) => updateUserRole(user.id, v)}>
-                            <SelectTrigger className="w-24 bg-black border-white/10"><SelectValue /></SelectTrigger>
-                            <SelectContent className="bg-[#0f0f0f] border-white/10 text-white"><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="outline" size="sm" onClick={() => { setSelectedUser(user); setShowUserCoursesModal(true); }} className="border-white/10 hover:bg-white/5">Pristup</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
+            <Card className="bg-white/5 border-white/10 p-6">
+              <Table>
+                <TableHeader><TableRow><TableHead>Ime</TableHead><TableHead>Email</TableHead><TableHead>Uloga</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {users.map(u => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-bold">{u.name}</TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell>
+                        <Select value={u.role} onValueChange={(v) => updateUserRole(u.id, v)}>
+                          <SelectTrigger className="bg-black border-white/10"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-black text-white"><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell><Button variant="outline" size="sm" onClick={() => { setSelectedUser(u); setShowUserCoursesModal(true); }}>Pristup</Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </Card>
           </TabsContent>
 
           {/* COURSES */}
           <TabsContent value="courses">
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="uppercase font-black italic">Kursevi i Lekcije</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowCourseModal(true); }} className="bg-orange-600 hover:bg-orange-700 font-black italic"><Plus className="w-4 h-4 mr-2" /> Novi Kurs</Button>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="multiple" className="space-y-4">
-                  {courses.map((course) => (
-                    <AccordionItem key={course.id} value={course.id} className="border-white/10 bg-white/[0.02] rounded-2xl overflow-hidden">
-                      <AccordionTrigger className="hover:no-underline px-6 py-4" onClick={() => !courseLessons[course.id] && loadCourseLessons(course.id)}>
-                        <div className="flex items-center justify-between w-full pr-4 uppercase font-black italic text-sm">
-                          <span>{course.title} <Badge variant="outline" className="ml-2 border-orange-500/50 text-orange-500">{course.program_name}</Badge></span>
-                          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(course); setShowCourseModal(true); }}><Edit className="w-4 h-4 text-white/50" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati kurs?')) coursesAPI.delete(course.id).then(loadAllData) }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+            <div className="flex justify-end mb-6">
+              <Button onClick={() => { setEditingItem(null); setShowCourseModal(true); }} className="bg-orange-600"><Plus className="w-4 h-4 mr-2" /> Novi Kurs</Button>
+            </div>
+            <Accordion type="multiple" className="space-y-4">
+              {courses.map(course => (
+                <AccordionItem key={course.id} value={course.id} className="bg-white/5 border-white/10 rounded-2xl px-6">
+                  <AccordionTrigger className="uppercase font-black italic text-sm" onClick={() => !courseLessons[course.id] && loadCourseLessons(course.id)}>
+                    <div className="flex justify-between w-full pr-4">
+                      <span>{course.title} <Badge className="ml-4 bg-orange-500/20 text-orange-500 border-none">{course.program_name}</Badge></span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <Button size="sm" className="mb-4" onClick={() => { setSelectedCourse(course); setEditingItem(null); setShowLessonModal(true); }}>Dodaj Lekciju</Button>
+                    <div className="space-y-2">
+                      {courseLessons[course.id]?.map(lesson => (
+                        <div key={lesson.id} className="flex justify-between p-4 bg-black/40 rounded-xl">
+                          <span className="font-bold">{lesson.title}</span>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" onClick={() => { setSelectedCourse(course); setEditingItem(lesson); setShowLessonModal(true); }}><Edit className="w-4 h-4" /></Button>
+                            <Button variant="ghost" onClick={() => { if(confirm('Obrisati?')) lessonsAPI.delete(lesson.id).then(() => loadCourseLessons(course.id)) }}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                           </div>
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-6 pb-6">
-                        <Button size="sm" className="mb-4 bg-white/5 border-white/10 hover:bg-white/10 font-bold" onClick={() => { setSelectedCourse(course); setEditingItem(null); setShowLessonModal(true); }}><Plus className="w-4 h-4 mr-2" /> Dodaj Lekciju</Button>
-                        <div className="space-y-2">
-                          {courseLessons[course.id]?.map((lesson) => (
-                            <div key={lesson.id} className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/5">
-                              <span className="font-bold text-white/80">{lesson.title}</span>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => { setSelectedCourse(course); setEditingItem(lesson); setShowLessonModal(true); }}><Edit className="w-4 h-4 text-white/40" /></Button>
-                                <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati lekciju?')) lessonsAPI.delete(lesson.id).then(() => loadCourseLessons(course.id)) }}><Trash2 className="w-4 h-4 text-destructive/50" /></Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </TabsContent>
 
-          {/* PROGRAMS */}
+          {/* PROGRAMS (PLAN PRETPALATE) */}
           <TabsContent value="programs">
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="uppercase font-black italic">Pretplatnički Planovi</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowProgramModal(true); }} className="bg-orange-600 hover:bg-orange-700 font-black italic"><Plus className="w-4 h-4 mr-2" /> Novi Plan</Button>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow className="border-white/10"><TableHead>Naziv</TableHead><TableHead>Cena</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Akcije</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {programs.map((p) => (
-                      <TableRow key={p.id} className="border-white/5">
-                        <TableCell className="font-black italic uppercase">{p.name}</TableCell>
-                        <TableCell className="font-black text-orange-500">€{p.price}</TableCell>
-                        <TableCell><Badge variant={p.is_active ? "default" : "destructive"} className="uppercase font-black text-[10px]">{p.is_active ? "Aktivan" : "Offline"}</Badge></TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(p); setShowProgramModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati plan?')) programsAPI.delete(p.id).then(loadAllData) }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <div className="flex justify-end mb-6">
+              <Button onClick={() => { setEditingItem(null); setShowProgramModal(true); }} className="bg-orange-600"><Plus className="w-4 h-4 mr-2" /> Novi Plan</Button>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {programs.map(p => (
+                <Card key={p.id} className="bg-white/5 border-white/10 p-6">
+                  <h3 className="text-xl font-black italic mb-2">{p.name}</h3>
+                  <p className="text-orange-500 font-black mb-4">€{p.price}</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => { setEditingItem(p); setShowProgramModal(true); }}>Uredi</Button>
+                    <Button variant="destructive" onClick={() => { if(confirm('Obrisati?')) programsAPI.delete(p.id).then(loadAllData) }}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           {/* SHOP */}
           <TabsContent value="shop">
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="uppercase font-black italic">Digital Shop</CardTitle>
-                <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }} className="bg-orange-600 hover:bg-orange-700 font-black italic"><Plus className="w-4 h-4 mr-2" /> Novi Proizvod</Button>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow className="border-white/10"><TableHead>Slika</TableHead><TableHead>Naziv</TableHead><TableHead>Kategorija</TableHead><TableHead>Cena</TableHead><TableHead className="text-right">Akcije</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {products.map((prod) => (
-                      <TableRow key={prod.id} className="border-white/5">
-                        <TableCell><img src={prod.image_url} className="w-10 h-10 object-cover rounded-lg border border-white/10" /></TableCell>
-                        <TableCell className="font-bold uppercase tracking-tighter italic">{prod.name}</TableCell>
-                        <TableCell><Badge className="bg-white/5 border-white/10 text-white/60">{prod.category || 'Digital'}</Badge></TableCell>
-                        <TableCell className="font-black text-orange-500">€{prod.price}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}><Edit className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => { if(confirm('Obrisati proizvod?')) shopAPI.deleteProduct(prod.id).then(loadAllData) }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <div className="flex justify-end mb-6">
+              <Button onClick={() => { setEditingItem(null); setShowProductModal(true); }} className="bg-orange-600"><Plus className="w-4 h-4 mr-2" /> Novi Proizvod</Button>
+            </div>
+            <Table>
+              <TableHeader><TableRow><TableHead>Slika</TableHead><TableHead>Naziv</TableHead><TableHead>Cijena</TableHead><TableHead>Akcije</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {products.map(prod => (
+                  <TableRow key={prod.id}>
+                    <TableCell><img src={prod.image_url} className="w-10 h-10 object-cover rounded-lg" /></TableCell>
+                    <TableCell className="font-bold">{prod.name}</TableCell>
+                    <TableCell>€{prod.price}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" onClick={() => { setEditingItem(prod); setShowProductModal(true); }}><Edit className="w-4 h-4" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </TabsContent>
 
           {/* SETTINGS */}
-          <TabsContent value="settings" className="space-y-6">
+          <TabsContent value="settings" className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Branding */}
-              <Card className="bg-white/5 border-white/10 p-8 rounded-3xl backdrop-blur-xl">
-                <h3 className="text-xl font-black italic uppercase mb-6 flex items-center gap-3"><Palette className="text-orange-500" /> Branding</h3>
-                <div className="space-y-6">
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Naziv Platforme</Label><Input value={settings.site_name || ''} onChange={(e) => setSettings({...settings, site_name: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Logo URL</Label><Input value={settings.logo_url || ''} onChange={(e) => setSettings({...settings, logo_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Footer Opis</Label><Textarea value={settings.footer_text || ''} onChange={(e) => setSettings({...settings, footer_text: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
+              <Card className="bg-white/5 border-white/10 p-8 rounded-3xl">
+                <h3 className="text-xl font-black italic mb-6">Sajt i Branding</h3>
+                <div className="space-y-4">
+                  <div><Label>Naziv Sajta</Label><Input value={settings.site_name || ''} onChange={e => setSettings({...settings, site_name: e.target.value})} className="bg-black mt-2" /></div>
+                  <div><Label>Logo URL</Label><Input value={settings.logo_url || ''} onChange={e => setSettings({...settings, logo_url: e.target.value})} className="bg-black mt-2" /></div>
+                  <div><Label>Hero Image URL</Label><Input value={settings.hero_image_url || ''} onChange={e => setSettings({...settings, hero_image_url: e.target.value})} className="bg-black mt-2" /></div>
+                  <div><Label>Mux Video Playback ID</Label><Input value={settings.hero_video_url || ''} onChange={e => setSettings({...settings, hero_video_url: e.target.value})} className="bg-black mt-2" /></div>
                 </div>
               </Card>
 
-              {/* Media & Hero */}
-              <Card className="bg-white/5 border-white/10 p-8 rounded-3xl backdrop-blur-xl">
-                <h3 className="text-xl font-black italic uppercase mb-6 flex items-center gap-3"><Video className="text-orange-500" /> Hero & Media</h3>
-                <div className="space-y-6">
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Mux Hero Playback ID</Label><Input value={settings.hero_video_url || ''} onChange={(e) => setSettings({...settings, hero_video_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Hero Headline</Label><Input value={settings.hero_headline || ''} onChange={(e) => setSettings({...settings, hero_headline: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Hero Image (Banner) URL</Label><Input value={settings.hero_image_url || ''} onChange={(e) => setSettings({...settings, hero_image_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                </div>
-              </Card>
-
-              {/* Social Links */}
-              <Card className="bg-white/5 border-white/10 p-8 rounded-3xl backdrop-blur-xl col-span-full">
-                <h3 className="text-xl font-black italic uppercase mb-6 flex items-center gap-3"><Globe className="text-orange-500" /> Social Networks</h3>
-                <div className="grid md:grid-cols-3 gap-8">
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest flex items-center gap-2"><Instagram className="w-3 h-3" /> Instagram URL</Label><Input value={settings.instagram_url || ''} onChange={(e) => setSettings({...settings, instagram_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest flex items-center gap-2"><Youtube className="w-3 h-3" /> YouTube URL</Label><Input value={settings.youtube_url || ''} onChange={(e) => setSettings({...settings, youtube_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest flex items-center gap-2"><Globe className="w-3 h-3" /> TikTok URL</Label><Input value={settings.tiktok_url || ''} onChange={(e) => setSettings({...settings, tiktok_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest flex items-center gap-2"><MessageCircle className="w-3 h-3" /> Discord Invite</Label><Input value={settings.discord_invite_url || ''} onChange={(e) => setSettings({...settings, discord_invite_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-                  <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest flex items-center gap-2"><Mail className="w-3 h-3" /> Kontakt Email</Label><Input value={settings.contact_email || ''} onChange={(e) => setSettings({...settings, contact_email: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
+              <Card className="bg-white/5 border-white/10 p-8 rounded-3xl">
+                <h3 className="text-xl font-black italic mb-6">Social Networks</h3>
+                <div className="space-y-4">
+                  <div><Label>Instagram URL</Label><Input value={settings.instagram_url || ''} onChange={e => setSettings({...settings, instagram_url: e.target.value})} className="bg-black mt-2" /></div>
+                  <div><Label>TikTok URL</Label><Input value={settings.tiktok_url || ''} onChange={e => setSettings({...settings, tiktok_url: e.target.value})} className="bg-black mt-2" /></div>
+                  <div><Label>YouTube URL</Label><Input value={settings.youtube_url || ''} onChange={e => setSettings({...settings, youtube_url: e.target.value})} className="bg-black mt-2" /></div>
+                  <div><Label>Discord Invite</Label><Input value={settings.discord_invite_url || ''} onChange={e => setSettings({...settings, discord_invite_url: e.target.value})} className="bg-black mt-2" /></div>
                 </div>
               </Card>
             </div>
-            <div className="flex justify-end pt-8"><Button onClick={handleUpdateSettings} className="bg-orange-600 hover:bg-orange-700 py-8 px-12 rounded-[2rem] font-black italic uppercase text-lg shadow-[0_0_40px_rgba(234,88,12,0.3)]"><Save className="mr-3 w-6 h-6" /> Sačuvaj sve promene</Button></div>
+            <Button onClick={handleUpdateSettings} className="w-full bg-orange-600 py-8 font-black uppercase italic rounded-3xl">Sačuvaj Sve Postavke</Button>
           </TabsContent>
         </Tabs>
 
         {/* --- MODALS --- */}
-        <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
-          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-2xl rounded-[2rem]">
-            <DialogHeader><DialogTitle className="uppercase font-black italic text-2xl">Plan Pretplate</DialogTitle></DialogHeader>
-            <ProgramForm initialData={editingItem} onSave={saveProgram} onCancel={() => setShowProgramModal(false)} />
-          </DialogContent>
-        </Dialog>
-
         <Dialog open={showCourseModal} onOpenChange={setShowCourseModal}>
-          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-xl rounded-[2rem]">
-            <DialogHeader><DialogTitle className="uppercase font-black italic text-2xl">Kurs</DialogTitle></DialogHeader>
+          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white"><DialogHeader><DialogTitle className="uppercase font-black italic">Kurs</DialogTitle></DialogHeader>
             <CourseForm initialData={editingItem} programs={programs} onSave={saveCourse} onCancel={() => setShowCourseModal(false)} />
           </DialogContent>
         </Dialog>
 
         <Dialog open={showLessonModal} onOpenChange={setShowLessonModal}>
-          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-xl rounded-[2rem]">
-            <DialogHeader><DialogTitle className="uppercase font-black italic text-2xl">Lekcija</DialogTitle></DialogHeader>
+          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white"><DialogHeader><DialogTitle className="uppercase font-black italic">Lekcija (Mux)</DialogTitle></DialogHeader>
             <LessonForm initialData={editingItem} courseId={selectedCourse?.id} onSave={saveLesson} onCancel={() => setShowLessonModal(false)} />
           </DialogContent>
         </Dialog>
 
+        <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
+          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white"><DialogHeader><DialogTitle className="uppercase font-black italic">Plan Pretplate</DialogTitle></DialogHeader>
+            <ProgramForm initialData={editingItem} onSave={saveProgram} onCancel={() => setShowProgramModal(false)} />
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={showProductModal} onOpenChange={setShowProductModal}>
-          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-2xl rounded-[2rem]">
-            <DialogHeader><DialogTitle className="uppercase font-black italic text-2xl">Digital Proizvod</DialogTitle></DialogHeader>
+          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white"><DialogHeader><DialogTitle className="uppercase font-black italic">Proizvod</DialogTitle></DialogHeader>
             <ProductForm initialData={editingItem} onSave={saveProduct} onCancel={() => setShowProductModal(false)} />
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showFaqModal} onOpenChange={setShowFaqModal}>
-          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-xl rounded-[2rem]">
-            <DialogHeader><DialogTitle className="uppercase font-black italic text-2xl">FAQ</DialogTitle></DialogHeader>
-            <FaqForm initialData={editingItem} onSave={saveFaq} onCancel={() => setShowFaqModal(false)} />
-          </DialogContent>
-        </Dialog>
-
         <Dialog open={showUserCoursesModal} onOpenChange={setShowUserCoursesModal}>
-          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-xl rounded-[2rem]">
-            <DialogHeader><DialogTitle className="uppercase font-black italic text-2xl">Pristup Kursevima</DialogTitle><DialogDescription className="text-white/40">{selectedUser?.name}</DialogDescription></DialogHeader>
-            <div className="space-y-4 mt-6 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
-              {courses.map((c) => {
+          <DialogContent className="bg-[#0f0f0f] border-white/10 text-white max-w-xl">
+            <DialogHeader><DialogTitle className="uppercase font-black italic">Pristup Kursevima - {selectedUser?.name}</DialogTitle></DialogHeader>
+            <div className="space-y-4 mt-6 h-96 overflow-y-auto pr-4">
+              {courses.map(c => {
                 const access = selectedUser?.courses?.includes(c.id);
                 return (
-                  <div key={c.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                  <div key={c.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
                     <span className="font-bold">{c.title}</span><Switch checked={access} onCheckedChange={() => toggleUserCourse(c.id, access)} />
                   </div>
                 );
@@ -456,35 +404,13 @@ const Admin = () => {
 
 // --- FORM SUB-COMPONENTS ---
 
-const ProgramForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: initialData?.name || '', description: initialData?.description || '',
-    price: initialData?.price || 0, currency: 'EUR',
-    thumbnail_url: initialData?.thumbnail_url || '',
-    features: initialData?.features?.join('\n') || '',
-    is_active: initialData?.is_active !== false
-  });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: Number(formData.price), features: formData.features.split('\n').filter(f => f.trim())}); }} className="space-y-6 pt-4">
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Naziv Plana</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Opis Plana</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-      <div className="grid grid-cols-2 gap-6">
-        <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Cena (€)</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-        <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Thumbnail URL</Label><Input value={formData.thumbnail_url} onChange={(e) => setFormData({...formData, thumbnail_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-      </div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Značajke (Svaka u novi red)</Label><Textarea value={formData.features} onChange={(e) => setFormData({...formData, features: e.target.value})} className="bg-black border-white/10 mt-2 h-32" /></div>
-      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1 uppercase font-black italic py-6 rounded-2xl border-white/10">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 uppercase font-black italic py-6 rounded-2xl">Sačuvaj Plan</Button></div>
-    </form>
-  );
-};
-
 const CourseForm = ({ initialData, programs, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ title: initialData?.title || '', program_id: initialData?.program_id || '', thumbnail_url: initialData?.thumbnail_url || '' });
+  const [formData, setFormData] = useState({ title: initialData?.title || '', program_id: initialData?.program_id || '' });
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-6 pt-4">
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Naslov Kursa</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Dodeljeni Program</Label><Select value={formData.program_id} onValueChange={(v) => setFormData({...formData, program_id: v})}><SelectTrigger className="bg-black border-white/10 mt-2"><SelectValue /></SelectTrigger><SelectContent className="bg-[#0f0f0f] border-white/10 text-white">{programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1 uppercase font-black italic py-6 rounded-2xl">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 uppercase font-black italic py-6 rounded-2xl">Sačuvaj</Button></div>
+      <div><Label>Naslov Kursa</Label><Input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="bg-black mt-2" required /></div>
+      <div><Label>Plan Pretplate</Label><Select value={formData.program_id} onValueChange={v => setFormData({...formData, program_id: v})}><SelectTrigger className="bg-black mt-2"><SelectValue placeholder="Izaberi plan..." /></SelectTrigger><SelectContent className="bg-[#0f0f0f] text-white">{programs.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600">Spremi</Button></div>
     </form>
   );
 };
@@ -493,36 +419,33 @@ const LessonForm = ({ initialData, courseId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({ title: initialData?.title || '', video_url: initialData?.video_url || '', course_id: courseId });
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-6 pt-4">
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Naslov Lekcije</Label><Input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Mux Playback ID</Label><Input value={formData.video_url} onChange={(e) => setFormData({...formData, video_url: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1 uppercase font-black italic py-6 rounded-2xl">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 uppercase font-black italic py-6 rounded-2xl">Sačuvaj</Button></div>
+      <div><Label>Naslov Lekcije</Label><Input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="bg-black mt-2" required /></div>
+      <div><Label>Mux Playback ID</Label><Input value={formData.video_url} onChange={e => setFormData({...formData, video_url: e.target.value})} className="bg-black mt-2" required /></div>
+      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600">Spremi</Button></div>
+    </form>
+  );
+};
+
+const ProgramForm = ({ initialData, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({ name: initialData?.name || '', price: initialData?.price || 0, features: initialData?.features?.join('\n') || '' });
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: Number(formData.price), features: formData.features.split('\n').filter(f => f.trim())}); }} className="space-y-6 pt-4">
+      <div><Label>Naziv Plana</Label><Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-black mt-2" required /></div>
+      <div><Label>Cijena (€)</Label><Input type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="bg-black mt-2" required /></div>
+      <div><Label>Features (novi red)</Label><Textarea value={formData.features} onChange={e => setFormData({...formData, features: e.target.value})} className="bg-black mt-2 h-32" /></div>
+      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600">Spremi</Button></div>
     </form>
   );
 };
 
 const ProductForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ name: initialData?.name || '', description: initialData?.description || '', price: initialData?.price || 0, image_url: initialData?.image_url || '', category: initialData?.category || '' });
+  const [formData, setFormData] = useState({ name: initialData?.name || '', price: initialData?.price || 0, image_url: initialData?.image_url || '' });
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave({...formData, price: Number(formData.price)}); }} className="space-y-6 pt-4">
-      <div className="grid grid-cols-2 gap-6">
-        <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Naziv Proizvoda</Label><Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-        <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Kategorija</Label><Input value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-      </div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Kratak Opis</Label><Textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Cena (€)</Label><Input type="number" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Thumbnail URL</Label><Input value={formData.image_url} onChange={(e) => setFormData({...formData, image_url: e.target.value})} className="bg-black border-white/10 mt-2" /></div>
-      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1 uppercase font-black italic py-6 rounded-2xl">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 uppercase font-black italic py-6 rounded-2xl">Spremi</Button></div>
-    </form>
-  );
-};
-
-const FaqForm = ({ initialData, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({ question: initialData?.question || '', answer: initialData?.answer || '' });
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-6 pt-4">
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Pitanje</Label><Input value={formData.question} onChange={(e) => setFormData({...formData, question: e.target.value})} className="bg-black border-white/10 mt-2" required /></div>
-      <div><Label className="uppercase font-black text-white/40 text-[10px] tracking-widest">Odgovor</Label><Textarea value={formData.answer} onChange={(e) => setFormData({...formData, answer: e.target.value})} className="bg-black border-white/10 mt-2 h-32" required /></div>
-      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1 uppercase font-black italic py-6 rounded-2xl">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700 uppercase font-black italic py-6 rounded-2xl">Spremi</Button></div>
+      <div><Label>Naziv</Label><Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-black mt-2" required /></div>
+      <div><Label>Cijena (€)</Label><Input type="number" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="bg-black mt-2" required /></div>
+      <div><Label>Slika URL</Label><Input value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} className="bg-black mt-2" /></div>
+      <div className="flex gap-4 pt-4"><Button type="button" variant="outline" onClick={onCancel} className="flex-1">Odustani</Button><Button type="submit" className="flex-1 bg-orange-600">Spremi</Button></div>
     </form>
   );
 };
