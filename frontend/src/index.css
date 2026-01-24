@@ -8,15 +8,15 @@
   /* Dark Luxury Theme (Default) */
   :root,
   [data-theme="dark-luxury"] {
-    --background: 0 0% 1%;      /* #050505 */
+    --background: 0 0% 1%;
     --foreground: 0 0% 96%;
     --card: 0 0% 5%;
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 5%;
     --popover-foreground: 0 0% 100%;
-    --primary: 24 94% 50%;      /* #EA580C */
+    --primary: 24 94% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 328 100% 54%;  
+    --secondary: 328 100% 54%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 10%;
     --muted-foreground: 240 5% 65%;
@@ -124,25 +124,20 @@
     min-height: 100vh;
     overflow-x: hidden;
     position: relative;
-    /* FIX: Glow direktno u pozadini body-ja za instant učitavanje */
     background-color: #050505;
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(234, 88, 12, 0.18) 0%, transparent 45%),
-      radial-gradient(circle at 100% 100%, rgba(236, 72, 153, 0.15) 0%, transparent 45%),
-      radial-gradient(circle at 50% 50%, rgba(234, 88, 12, 0.02) 0%, transparent 70%);
+      radial-gradient(circle at 0% 0%, rgba(234, 88, 12, 0.18) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(219, 39, 119, 0.15) 0%, transparent 50%);
     background-attachment: fixed;
   }
   
-  /* Onemogućavamo stare before efekte koji su blicali i prekrivali */
-  body::before {
-    display: none !important;
-  }
+  body::before { display: none !important; }
 
   #root {
     position: relative;
     width: 100%;
     isolation: isolate;
-    z-index: 1;
+    z-index: 10;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -151,66 +146,22 @@
 }
 
 @layer utilities {
-  .heading-1 {
-    @apply text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight;
-    font-family: 'Playfair Display', serif;
-  }
-  
-  .heading-2 {
-    @apply text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight;
-    font-family: 'Playfair Display', serif;
-  }
-  
-  .heading-3 {
-    @apply text-xl sm:text-2xl lg:text-3xl font-medium;
-    font-family: 'Playfair Display', serif;
-  }
-  
-  .body-text {
-    @apply text-base lg:text-lg leading-relaxed text-muted-foreground;
-  }
-  
-  .small-caps {
-    @apply text-sm font-medium tracking-widest uppercase text-muted-foreground;
-  }
-  
-  .glass-card {
-    @apply bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10;
-  }
-  
-  .luxury-card {
-    @apply bg-card border border-white/5 shadow-2xl hover:border-primary/30 transition-colors duration-300 rounded-2xl;
-  }
-  
-  .gradient-gold {
-    @apply bg-gradient-to-r from-orange-500 to-pink-600;
-  }
-  
-  .text-gradient-gold {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600;
-  }
+  .heading-1 { @apply text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight; font-family: 'Playfair Display', serif; }
+  .heading-2 { @apply text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight; font-family: 'Playfair Display', serif; }
+  .heading-3 { @apply text-xl sm:text-2xl lg:text-3xl font-medium; font-family: 'Playfair Display', serif; }
+  .body-text { @apply text-base lg:text-lg leading-relaxed text-muted-foreground; }
+  .small-caps { @apply text-sm font-medium tracking-widest uppercase text-muted-foreground; }
+  .glass-card { @apply bg-white/5 backdrop-blur-xl border border-white/10; }
+  .luxury-card { @apply bg-card border border-white/5 shadow-2xl hover:border-primary/30 transition-colors duration-300 rounded-2xl; }
+  .gradient-gold { @apply bg-gradient-to-r from-orange-500 to-pink-600; }
+  .text-gradient-gold { @apply text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600; }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #050505; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #ea580c; }
 
-::-webkit-scrollbar-track {
-  background: #050505;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
-}
-
-/* Noise texture overlay */
 .noise-overlay {
   position: fixed;
   inset: 0;
@@ -220,40 +171,11 @@
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Horizontal scroll for results gallery */
-.scroll-gallery {
-  display: flex;
-  gap: 1.5rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 1rem;
-}
+.scroll-gallery { display: flex; gap: 1.5rem; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 1rem; }
+.scroll-gallery::-webkit-scrollbar { display: none; }
+.scroll-gallery > * { scroll-snap-align: start; flex-shrink: 0; }
 
-.scroll-gallery::-webkit-scrollbar {
-  display: none;
-}
-
-.scroll-gallery > * {
-  scroll-snap-align: start;
-  flex-shrink: 0;
-}
-
-/* Auto-scroll animation */
-@keyframes scroll-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.auto-scroll {
-  animation: scroll-left 30s linear infinite;
-}
-
-.auto-scroll:hover {
-  animation-play-state: paused;
-}
-
-[data-debug-wrapper="true"] {
-  display: contents !important;
-}
+@keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.auto-scroll { animation: scroll-left 30s linear infinite; }
+.auto-scroll:hover { animation-play-state: paused; }
+[data-debug-wrapper="true"] { display: contents !important; }
