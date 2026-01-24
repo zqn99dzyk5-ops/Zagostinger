@@ -9,61 +9,46 @@ import {
   Zap, 
   ShieldCheck,
   TrendingUp,
-  Globe
+  Globe,
+  Rocket
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import axios from 'axios';
 
 const Home = () => {
-  const { settings } = useSettings();
   const { user } = useAuth();
-  const [programs, setPrograms] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(null);
 
-  // Fallback programi da sajt nikad ne bude prazan
-  const defaultPrograms = [
+  // Podaci su unutar koda da bi sajt uvek bio pun i "živ"
+  const programs = [
     {
-      _id: '1',
+      id: 'p1',
       name: 'Starter Academy',
       price: 49,
-      features: ['Osnove digitalne zarade', 'Zajednica studenata', 'Live webinar jednom nedeljno', 'Pristup osnovnim alatima']
+      badge: 'Najpopularnije',
+      features: ['Osnove digitalne zarade', 'Zajednica studenata', 'Live webinar nedeljno', 'Pristup alatima']
     },
     {
-      _id: '2',
-      name: 'Elite Mentorstvo',
+      id: 'p2',
+      name: 'Elite Mastery',
       price: 149,
-      features: ['1 na 1 konsultacije', 'Privatne strategije', 'Napredni resursi', 'Direktan kontakt sa mentorom']
+      badge: 'Preporuka',
+      features: ['1 na 1 konsultacije', 'Privatne strategije', 'Napredni resursi', 'Direktan kontakt']
     },
     {
-      _id: '3',
-      name: 'Business Pro',
+      id: 'p3',
+      name: 'Business Scale',
       price: 299,
-      features: ['Full biznis automatizacija', 'Scale strategije', 'Investicioni saveti', 'VIP Discord kanal']
+      badge: 'VIP',
+      features: ['Full automatizacija', 'Scale do 10k+', 'Investicioni saveti', 'VIP Discord kanal']
     }
   ];
 
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        const res = await axios.get('/api/programs');
-        if (res.data && res.data.length > 0) {
-          setPrograms(res.data);
-        } else {
-          setPrograms(defaultPrograms);
-        }
-      } catch (err) {
-        setPrograms(defaultPrograms);
-      }
-    };
-    fetchPrograms();
-  }, []);
-
   const handleJoinProgram = async (programId) => {
     if (!user) {
-      toast.error("Moraš biti prijavljen.");
+      toast.error("Moraš biti prijavljen da bi se upisao.");
       return;
     }
     setLoading(programId);
@@ -73,7 +58,7 @@ const Home = () => {
         window.location.href = res.data.checkout_url;
       }
     } catch (err) {
-      toast.error("Greška pri pokretanju upisa.");
+      toast.error("Greška pri pokretanju uplate.");
     } finally {
       setLoading(false);
     }
@@ -83,60 +68,47 @@ const Home = () => {
     <div className="relative bg-[#050505] min-h-screen text-white overflow-x-hidden">
       
       {/* 1. HERO SECTION */}
-      <section className="relative h-screen flex items-center justify-center">
-        {settings?.hero_video_url ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-40"
-          >
-            <source src={settings.hero_video_url} type="video/mp4" />
-          </video>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-tr from-orange-900/20 via-black to-pink-900/20" />
-        )}
-        
-        {/* Overlayi za dubinu */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#050505]" />
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Glows */}
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-500/10 via-transparent to-transparent opacity-50" />
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-orange-600/20 blur-[120px] rounded-full" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-pink-600/20 blur-[120px] rounded-full" />
 
-        <div className="relative z-10 text-center px-6 max-w-5xl">
+        <div className="relative z-10 text-center px-6 max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="flex justify-center mb-6">
-              <span className="px-4 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-400 text-xs font-bold tracking-[0.3em] uppercase">
-                The New Era of Business
+            <div className="flex justify-center mb-8">
+              <span className="px-5 py-2 rounded-full border border-orange-500/30 bg-orange-500/5 text-orange-400 text-[10px] font-black tracking-[0.4em] uppercase">
+                Continental Academy • Est. 2024
               </span>
             </div>
             
-            <h1 className="text-5xl md:text-8xl font-heading font-black mb-8 tracking-tighter leading-[0.9]">
-              DOMINIRAJ <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-orange-500">
-                DIGITALNIM TRŽIŠTEM
+            <h1 className="text-6xl md:text-[10rem] font-black mb-8 tracking-tighter leading-[0.85] uppercase">
+              Build Your <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-orange-500 animate-gradient">
+                Empire
               </span>
             </h1>
             
-            <p className="text-muted-foreground text-lg md:text-xl mb-12 max-w-2xl mx-auto font-light tracking-wide">
-              Continental Academy je jedina platforma koja ti nudi direktno mentorstvo i resurse za scale-ovanje digitalnog biznisa na 5-6 cifara.
+            <p className="text-muted-foreground text-lg md:text-2xl mb-12 max-w-3xl mx-auto font-light tracking-tight leading-relaxed">
+              Pridruži se najjačoj zajednici na Balkanu. Nauči kako da monetizuješ digitalne veštine i preuzmeš kontrolu nad svojim životom.
             </p>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
               <Button 
                 onClick={() => document.getElementById('programs').scrollIntoView({ behavior: 'smooth' })}
-                className="w-full sm:w-auto px-10 py-8 rounded-2xl text-lg font-black bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 shadow-[0_0_40px_-10px_rgba(249,115,22,0.5)] transition-all active:scale-95"
+                className="w-full sm:w-auto px-12 py-9 rounded-[2rem] text-xl font-black bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 shadow-[0_20px_50px_rgba(249,115,22,0.3)] transition-all active:scale-95"
               >
-                ZAPOČNI ODMAH <ArrowRight className="ml-2 w-5 h-5" />
+                KRENI ODMAH <Rocket className="ml-3 w-6 h-6" />
               </Button>
-              <button className="flex items-center gap-3 text-white/80 font-bold hover:text-white transition-all group">
-                <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:border-orange-500/50 group-hover:bg-orange-500/10">
-                  <Play className="w-4 h-4 fill-current ml-1" />
+              <button className="flex items-center gap-4 text-white/70 font-bold hover:text-white transition-all group">
+                <div className="w-14 h-14 rounded-full border border-white/10 flex items-center justify-center group-hover:border-orange-500/40 group-hover:bg-orange-500/5">
+                  <Play className="w-5 h-5 fill-current ml-1 text-orange-500" />
                 </div>
-                POGLEDAJ INTRO
+                POGLEDAJ VIDEO
               </button>
             </div>
           </motion.div>
@@ -144,69 +116,76 @@ const Home = () => {
       </section>
 
       {/* 2. STATS SECTION */}
-      <section className="relative z-10 py-24 border-y border-white/5 bg-black/40 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
+      <section className="relative z-10 py-32 border-y border-white/5 bg-black/60 backdrop-blur-3xl">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-16">
           {[
             { label: 'Aktivnih Članova', value: '1,500+', icon: Users, color: 'text-orange-500' },
             { label: 'Uspješnih Projekata', value: '120+', icon: Zap, color: 'text-pink-500' },
-            { label: 'Zemalja širom sveta', value: '15+', icon: Globe, color: 'text-orange-400' },
-            { label: 'Prosječna Zarada', value: '€2.5k', icon: TrendingUp, color: 'text-pink-400' }
+            { label: 'Zemalja', value: '15+', icon: Globe, color: 'text-orange-400' },
+            { label: 'Zadovoljstvo', value: '4.9/5', icon: Star, color: 'text-pink-400' }
           ].map((stat, i) => (
             <div key={i} className="text-center group">
-              <stat.icon className={`w-6 h-6 mx-auto mb-4 ${stat.color} group-hover:scale-110 transition-transform`} />
-              <h3 className="text-4xl font-black mb-1 tracking-tighter">{stat.value}</h3>
-              <p className="text-muted-foreground text-[10px] uppercase tracking-[0.2em] font-bold">{stat.label}</p>
+              <div className={`w-12 h-12 mx-auto mb-6 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 group-hover:border-orange-500/30 transition-all`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              </div>
+              <h3 className="text-5xl font-black mb-2 tracking-tighter">{stat.value}</h3>
+              <p className="text-muted-foreground text-xs uppercase tracking-[0.3em] font-bold opacity-60">{stat.label}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* 3. PROGRAMS SECTION */}
-      <section id="programs" className="relative z-10 py-32 px-6 lg:px-12 max-w-7xl mx-auto">
-        <div className="text-center mb-24">
-          <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter uppercase">
-            Odaberi Svoj <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">Put</span>
+      <section id="programs" className="relative z-10 py-40 px-6 lg:px-12 max-w-7xl mx-auto">
+        <div className="text-center mb-32">
+          <h2 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter uppercase leading-none">
+            Ekskluzivni <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">Programi</span>
           </h2>
-          <div className="h-1 w-24 bg-orange-500 mx-auto rounded-full shadow-[0_0_20px_rgba(249,115,22,0.8)]" />
+          <div className="h-2 w-32 bg-gradient-to-r from-orange-500 to-pink-500 mx-auto rounded-full shadow-[0_0_30px_rgba(249,115,22,0.6)]" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {programs.map((program) => (
             <motion.div 
-              key={program._id}
-              whileHover={{ y: -15 }}
-              className="relative group p-[1px] rounded-[2.5rem] overflow-hidden"
+              key={program.id}
+              whileHover={{ y: -20 }}
+              className="relative group p-[1px] rounded-[3rem] overflow-hidden"
             >
-              {/* Border Gradient na hover */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent group-hover:from-orange-500 group-hover:to-pink-600 transition-all duration-500" />
+              {/* Border Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent group-hover:from-orange-500 group-hover:to-pink-600 transition-all duration-700" />
               
-              <div className="relative bg-[#0a0a0a] rounded-[2.5rem] p-10 h-full flex flex-col overflow-hidden">
-                {/* Glow unutar kartice */}
-                <div className="absolute -top-20 -right-20 w-40 h-40 bg-orange-500/10 blur-[60px] group-hover:bg-orange-500/20 transition-all" />
-                
-                <h3 className="text-xs font-black tracking-[0.3em] text-orange-500 uppercase mb-4">{program.name}</h3>
-                
-                <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-6xl font-black tracking-tighter">€{program.price}</span>
-                  <span className="text-muted-foreground font-medium">/ msc</span>
+              <div className="relative bg-[#0a0a0a] rounded-[3rem] p-12 h-full flex flex-col">
+                <div className="absolute top-8 right-8">
+                    <span className="px-4 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[10px] font-bold uppercase tracking-widest">
+                        {program.badge}
+                    </span>
                 </div>
 
-                <ul className="space-y-5 mb-12 flex-grow">
-                  {program.features?.map((f, i) => (
-                    <li key={i} className="flex items-center gap-4 text-sm font-medium text-white/80">
-                      <div className="w-5 h-5 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                        <CheckCircle2 className="w-3 h-3 text-orange-500" />
+                <h3 className="text-3xl font-black tracking-tight text-white mb-2 uppercase">{program.name}</h3>
+                
+                <div className="flex items-baseline gap-2 mb-10">
+                  <span className="text-7xl font-black tracking-tighter text-white">€{program.price}</span>
+                  <span className="text-muted-foreground text-sm font-bold uppercase opacity-50">/msc</span>
+                </div>
+
+                <div className="space-y-6 mb-16 flex-grow">
+                  {program.features.map((f, i) => (
+                    <div key={i} className="flex items-center gap-4 text-white/80">
+                      <div className="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-500" />
                       </div>
-                      {f}
-                    </li>
+                      <span className="text-sm font-medium tracking-tight">{f}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
 
                 <Button 
-                  onClick={() => handleJoinProgram(program._id)}
-                  className="w-full py-8 rounded-2xl font-black tracking-widest bg-white text-black hover:bg-gradient-to-r hover:from-orange-500 hover:to-pink-600 hover:text-white transition-all duration-500 group-hover:shadow-[0_10px_30px_rgba(249,115,22,0.3)]"
+                  onClick={() => handleJoinProgram(program.id)}
+                  disabled={loading === program.id}
+                  className="w-full py-9 rounded-[1.5rem] font-black tracking-[0.1em] bg-white text-black hover:bg-gradient-to-r hover:from-orange-500 hover:to-pink-600 hover:text-white transition-all duration-500 uppercase text-lg"
                 >
-                  {loading === program._id ? "UČITAVANJE..." : "POSTANI ČLAN"}
+                  {loading === program.id ? "Procesiranje..." : "PRIDRUŽI SE SADA"}
                 </Button>
               </div>
             </motion.div>
@@ -214,8 +193,8 @@ const Home = () => {
         </div>
       </section>
       
-      {/* Decorative Blur Bottom */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-orange-500/5 blur-[120px] pointer-events-none" />
+      {/* Decorative Bottom Glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-orange-600/5 blur-[150px] pointer-events-none" />
     </div>
   );
 };
